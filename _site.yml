@@ -1,1 +1,9 @@
-
+name: "aleks-website"
+output_dir: "."
+navbar:
+  title: "Alek's Portfolio"
+  left:
+    - text: "Home"
+      href: index.html
+    - text: "About Me"
+      href: about.html

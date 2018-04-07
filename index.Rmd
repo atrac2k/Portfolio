@@ -1,1 +1,43 @@
+---
+title: "Alek's Portfolio"
+---
 
+# Bigfoot: Fact or Non-Fiction
+
+```{r, message=FALSE, warning=FALSE, include=FALSE}
+library(leaflet)
+library(dplyr)
+library(shiny)
+library(plotly)
+```
+
+```{r, echo=FALSE, warning=FALSE}
+dat <- read.csv("C:/Users/ATrac/OneDrive/Documents/Web/atraczyk.github.io/bfro_reports_geocoded.csv")
+
+
+# geo styling
+g <- list(
+  scope = 'usa',
+  projection = list(type = 'albers usa'),
+  showland = TRUE,
+  landcolor = "grey",
+  subunitcolor = "grey",
+  countrycolor = "grey",
+  countrywidth = 0.5,
+  subunitwidth = 0.5
+)
+
+p <- plot_geo(dat, lat = ~latitude, lon = ~longitude) %>%
+  add_markers(
+    text = ~paste(title, classification, sep = "<br />"),
+    color = ~classification, symbol = I("circle-dot"), size = I(3), hoverinfo = "text"
+  ) %>%
+  colorbar(title = "Sighting Type") %>%
+  layout(
+    title = 'Bigfoot Sightings United States', geo = g
+  )
+
+p
+```
+
+As populations continue to expand into previously rural areas, we find ourselves face to face with what lives in the deep of the woods. In this project, for the first time, we apply machine learning and super-duper advanced visualization techniques to finally answer the question: Bigfoot, fact or non-fiction.
