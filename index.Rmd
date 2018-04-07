@@ -32,7 +32,6 @@ p <- plot_geo(dat, lat = ~latitude, lon = ~longitude) %>%
     text = ~paste(title, classification, sep = "<br />"),
     color = ~classification, symbol = I("circle-dot"), size = I(3), hoverinfo = "text"
   ) %>%
-  colorbar(title = "Sighting Type") %>%
   layout(
     title = 'Bigfoot Sightings United States', geo = g
   )
