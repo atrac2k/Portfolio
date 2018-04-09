@@ -185,3 +185,57 @@ These seven sub-sepcies of Bigfeet seem to follow regional differences already u
   * Skunk Ape in Florida
   
 Our seventh sub-species of Bigfoot seem to have no regional equivalent (I got bored after checking like 2 google results). Thus, our EM model must have found an entirely new sub-species of Bigfoot in the Southeastern states. As the discoverer of this species, I have chosen to name is "Grandis Alekus".
+
+### Sub-Species Characteristics
+
+Now that we have our various sub-species, we can start to study each individually.
+```{r, message=FALSE, warning=FALSE, include=FALSE}
+library(lubridate)
+dat <- read.csv("C:/Users/ATrac/OneDrive/Documents/Web/atraczyk.github.io/bfro_reports_geocoded.csv")
+dat <- dat[!is.na(dat$latitude)&!is.na(dat$longitude),]
+
+dat[,"Class"] <- as.factor(test2$class)
+dat[,"Species"] <- ""
+for (i in 1:nrow(dat)){
+  if (dat[i,28]==1){
+    dat[i,29] <- "Mogollon"
+  }
+    if (dat[i,28]==2){
+    dat[i,29] <- "Grassman"
+    }
+    if (dat[i,28]==3){
+    dat[i,29] <- "Momo"
+    }
+    if (dat[i,28]==4){
+    dat[i,29] <- "Wendigo"
+    }
+    if (dat[i,28]==5){
+    dat[i,29] <- "Skunk Ape"
+    }
+    if (dat[i,28]==6){
+    dat[i,29] <- "Sasquatch"
+    }
+    if (dat[i,28]==7){
+    dat[i,29] <- "Grandis Alekus"
+  }
+  
+}
+dat[,"Month"] <- month(as.Date(dat$date,"%Y-%m-%d"))
+```
+```{r}
+qplot(Month,data=dat,facets=Species~.,geom="histogram",fill=Species,binwidth=1,main="Sightings By Month")+
+  scale_x_continuous(name="Month", breaks=c(1:12),labels=c("Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"))
+```
+#### Climate
+
+We take note from the above plot of sightings by month, that in most sub-species of Bigfoot sightings drop during the winter months (noteable exceptions include Grandis Alekus, Grassman, Mogollon). It is my hypothesis that most Bigfoot sub-species hybernate during winter, and thus sightings drop off (of course it isn't because less people are outside during the winter. Don't be preposterous). We test this hypothesis by instead plotting by the low temperature during each sighting:
+
+```{r, message=FALSE, warning=FALSE}
+qplot(round(temperature_low,0),data=dat,facets=Species~.,geom="histogram",fill=Species,binwidth=2,main="Sightings By Low Temperature")+
+  scale_x_continuous(name="Low Temperature")
+```
+
+When viewing the data by low temperature, we notice that sightings when the temperature is blow freezing (32) tend to become far less frequent. This does give quite the credibility to our hibernation theory. This seems to also closely resemble the hibernation paterns of bears in North America, which tend to begin hibernation just as temperatures are nearing freezing.
+
+#### Diet
+Many studies also assume Bigfoot has a similar diet to bears. Although little is known about the diet of Bigfoot, it shouldn't be much of a stretch to assume Grandis Alekus' favorite food is cut up hot dogs and ketchup (just like their namesake). Since I'm too lazy to find enough data to test this hypothesis, I'm assuming I'm correct because I haven't seen data to prove otherwise. 
