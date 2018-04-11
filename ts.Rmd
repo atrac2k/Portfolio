@@ -1,8 +1,76 @@
 ---
-title: "ts"
-author: "Alexander Traczyk"
-date: "April 10, 2018"
+title: "Frequency Analysis"
 output: html_document
 ---
 
-I haven't done this shit yet. Hold onto your butt. 
+```{r, message=FALSE, warning=FALSE, include=FALSE}
+library(leaflet)
+library(dplyr)
+library(forecast)
+library(hts)
+library(EMCluster)
+```
+
+```{r, echo=FALSE, warning=FALSE}
+dat <- read.csv("C:/Users/ATrac/OneDrive/Documents/Web/atraczyk.github.io/bfro_reports_geocoded.csv")
+dat <- read.csv("C:/Users/ATrac/OneDrive/Documents/Web/atraczyk.github.io/bfro_reports_geocoded.csv")
+dat <- dat[!is.na(dat$latitude)&!is.na(dat$longitude),]
+
+dat[,"Class"] <- as.factor(test2$class)
+dat[,"Species"] <- ""
+for (i in 1:nrow(dat)){
+  if (dat[i,28]==1){
+    dat[i,29] <- "Mogollon"
+  }
+    if (dat[i,28]==2){
+    dat[i,29] <- "Grassman"
+    }
+    if (dat[i,28]==3){
+    dat[i,29] <- "Momo"
+    }
+    if (dat[i,28]==4){
+    dat[i,29] <- "Wendigo"
+    }
+    if (dat[i,28]==5){
+    dat[i,29] <- "Skunk Ape"
+    }
+    if (dat[i,28]==6){
+    dat[i,29] <- "Sasquatch"
+    }
+    if (dat[i,28]==7){
+    dat[i,29] <- "Grandis Alekus"
+  }
+}
+dat$date <- as.character(dat$date)
+dat[,"Year"] <- as.numeric(substr(dat$date,1,4))
+dat[,"Month"] <- as.numeric(substr(dat$date,6,7))
+
+bigts <- as.data.frame(NULL)
+bigts[1:679,1] <- NA
+bigts[,1:3] <- NA
+species <- c("Mogollon","Grassman","Momo","Wendigo","Skunk Ape","Sasquatch","Grandis Alekus")
+
+for (k in 1:7){
+  temp <- filter(dat,dat$Species == as.character(rownames(ts)[k]))
+  for (i in 1:97){
+    temp2 <- filter(temp,temp$Year == (i+1920))
+    bigts[(k)+i,1] <- i+1920
+    bigts[k,i] <- nrow(temp2)
+  }
+}
+bigts <- as.data.frame(t(bigts))
+bigts[,"year"] <- c(1921:2017)
+
+temp <- dat[,c("Year","Species")]
+temp <- filter(temp,temp$Year != 2017)
+bigts <- temp %>% group_by(Species,Year)
+bigts <- bigts %>% count(Year)
+```
+
+```{r, message=FALSE, warning=FALSE}
+library(ggplot2)
+
+qplot(Year, n, data = bigts, geom = "line", group = Species,color=Species,show.legend=F)+
+    facet_grid(Species ~ ., scale = "free_y")+ 
+    geom_vline(xintercept=1967)
+```

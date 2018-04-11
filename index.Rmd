@@ -1,13 +1,11 @@
 ---
-title: "Alek's Portfolio"
+title: "Bigfoot: Fact or Non-Fiction"
 ---
 
-# Bigfoot: Fact or Non-Fiction
 
 ```{r, message=FALSE, warning=FALSE, include=FALSE}
 library(leaflet)
 library(dplyr)
-library(shiny)
 library(plotly)
 ```
 
