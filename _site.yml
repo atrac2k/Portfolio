@@ -5,5 +5,9 @@ navbar:
   left:
     - text: "Home"
       href: index.html
+    - text: "Sub-Species Analysis"
+      href: sub.html
+    - text: "Frequency Analysis"
+      href: ts.html
     - text: "About Me"
       href: about.html

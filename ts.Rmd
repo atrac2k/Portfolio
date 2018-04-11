@@ -1,0 +1,8 @@
+---
+title: "ts"
+author: "Alexander Traczyk"
+date: "April 10, 2018"
+output: html_document
+---
+
+I haven't done this shit yet. Hold onto your butt. 
