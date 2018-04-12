@@ -1,0 +1,155 @@
+---
+title: "Natural Language Process"
+---
+
+Included in our dataset, we are lucky enough to have the full description of each Bigfoot encounter. Through Natural Language Process, we can study the commonalities between sightings. In the following code, we split each description, remove the 3,000 most common words, and keep a running total of each word. Additionally, we find the frequency of bigrams. 
+
+```{r, message=FALSE, warning=FALSE, include=TRUE,eval=FALSE}
+library(readxl)
+library(httr)
+library(dplyr)
+
+charfreq <- data.frame(NULL)
+charfreq[1,1] <- NA
+charfreq[1,2] <- NA
+
+connections <- data.frame(NULL)
+connections[1,1] <- NA
+connections[1,2] <- NA
+connections[1,3] <- NA
+
+conndf <- data.frame(NULL)
+
+conndf[1:100,1] <- NA
+
+url <- "http://www.rupert.id.au/resources/4000-most-common-english-words-xlsx.xlsx"
+
+GET(url,write_disk(common<-tempfile(fileext=".xlsx")))
+common <- read_excel(path=common,sheet=1)
+colnames(common) <- c("most")
+common$most <- toupper(common$most)
+
+for (i in 1:nrow(dat)){
+  temp <- strsplit(toupper(as.character(dat[i,1]))," ")
+  temp <- data.frame(temp)
+  temp[,1] <- gsub("[(),.!?`\'\"#-]", "", temp[,1])
+  colnames(temp) <- c("word")
+  temp <- anti_join(temp,common,by=c("word" = "most"))
+  
+  if (nrow(temp) > 1){
+    connfdf <- data.frame(NULL)
+    connfdf[1,1] <- NA
+    connfdf[1,2] <- NA
+    conntemp <- data.frame(as.character(temp[,1]))
+      for (l in 1:(nrow(conntemp)-1)){
+        temp2 <- c(as.character(conntemp[l,1]),as.character(conntemp[l+1,1]))
+        temp2 <- as.data.frame(t(temp2))
+        connfdf <- bind_rows(connfdf,temp2)
+      }
+    connfdf <- connfdf[-1,]
+    conndf <- connfdf %>% group_by(connfdf[,1],connfdf[,2]) %>% summarise(n=n())
+    
+  for (k in 1:nrow(conndf)){
+    if ((!conndf[k,1] %in% connections[,1]) & (!conndf[k,2] %in% connections[,2])){
+      connections[nrow(connections)+1,1] <- conndf[k,1]
+      connections[nrow(connections),2] <- conndf[k,2]
+      connections[nrow(connections),3] <- conndf[k,3]
+    }
+    else {
+      index <- which((connections[,1] %in% conndf[k,1]) & (connections[,2] %in% conndf[k,2]))
+      connections[index,3] <- connections[index,3] + conndf[k,3]
+      }
+  }}
+  
+  temp <- temp %>% group_by(temp[,1]) %>% summarise(n = n())
+  temp <- filter(temp,temp[,1] != "")
+  if (nrow(temp) > 0){
+    for (j in 1:nrow(temp)){
+      if (!temp[j,1] %in% charfreq[,1]){
+        charfreq[nrow(charfreq)+1,1] <- temp[j,1]
+        charfreq[nrow(charfreq),2] <- temp[j,2]
+      }
+      else {
+        index <- which(charfreq[,1] %in% temp[j,1])
+        charfreq[index,2] <- charfreq[index,2] + temp[j,2]
+      }
+    }
+  }
+
+}
+
+
+```
+```{r, message=FALSE, warning=FALSE, include=FALSE}
+library(readxl)
+library(httr)
+library(dplyr)
+charfreq <- read.csv("C:/Users/ATrac/OneDrive/Documents/charfreq.csv")
+charfreq <- charfreq[,-1]
+charfreq <- filter(charfreq, V1 != "WAS" & V1 != "HAD" & V1 != "WERE" & V1 != "IS" & V1 != "BEEN" & V1 != "AN" & V1 != "WENT" & V1 != "GOT" &
+                     V1 != "DID" & V1 != "DIDNT" & V1 != "ARE" & V1 != "DONT" & V1 != "WASNT" & V1 != "HAS")
+colnames(charfreq) <- c("Word","Frequency")
+connections <- read.csv("C:/Users/ATrac/OneDrive/Documents/connections.csv")
+connections <- connections[,-1]
+connections <- filter(connections, connections$V1 != "" & connections$V2 != "")
+colnames(connections) <- c("First Word","Second Word","Frequency")
+```
+
+We first take a look at the 20 most common words:
+```{r}
+top <- data.frame(head(charfreq[order(charfreq$Frequency,decreasing=T),],20))
+rownames(top) <- c(1:20)
+top
+```
+
+From just the top 10 words we can start to make some general characterizations about sightings:
+
+  * Since the most common word was "HEARD" we can assume that in most sightings, survivors could hear the big create trudging through the brush (therefore, we can also assume that deaf people have a much lower probability of bigfoot encounters). 
+  * We also notice that number 9 ("BIGFOOT") tells us that most survivors are smart enough to know the truth.
+  * As number 3 ("WOODS") and number 18 ("TREES") both have to do with forested areas, we solidify the theory that Bigfoot is a woodland creature.
+  * Somewhat shockingly, people have to mention their foot fetishes so much that it's number 5 on the word frequency list.
+  
+For a faster glance at the data, we check the following word cloud:
+```{r}
+library(wordcloud)
+cloud <- filter(charfreq,Frequency > 780)
+wordcloud(cloud$Word,cloud$Frequency,color="brown")
+```
+
+Our wordcloud seems to follow the general patterns of common Bigfoot encounters. The experience is very vocal (SOUNDS,HEARD,SOUNDED), and typically involved seeing the beautiful creature (SAW,LOOKED,LOOKING,SEEN,NOTICED,SIGHTING). Again, typically these encounters seem to be in the forest (TREES,WOODS, CREEK[?]). Lastly, our survivors also seem to be very shallow, focusing on Bigfoots looks ([strong] ARMS, [long] LEGS, [I'm getting lost in Bigfoots] EYES).
+
+Similarly, we check the most common bigrams:
+```{r}
+top <- data.frame(head(connections[order(connections$Frequency,decreasing=T),],20))
+rownames(top) <- c(1:20)
+top
+```
+
+Again, we notice intersting things right away:
+
+  * Survivors seem to frequently agree that the animal is around 8 feet tall. From number 13 ("WHOOP WHOOP"), we get a general idea of what a Bigfoot call sounds like, and that most encounters happen at 30 yeards (number 3). Since "ARMS SWINGING" is also such a commonly used bigram, we discover that Bigfoots favorite dance is the Charleston
+  * We also take note that survivors seem to usually be prepared for their excursions by bringing sleeping bags (number 8), bring flashlights (number 15), and somehow found tents with locking doors (number 11).
+  
+We can also create a network diagram from these bigrams:
+```{r, message=FALSE, warning=FALSE, include=FALSE}
+charfreq <- read.csv("C:/Users/ATrac/OneDrive/Documents/charfreq.csv")
+charfreq <- charfreq[,-1]
+colnames(charfreq) <- c("Word","Size")
+connections <- read.csv("C:/Users/ATrac/OneDrive/Documents/connections.csv")
+connections <- connections[,-1]
+connections <- filter(connections, connections$V1 != "" & connections$V2 != "")
+colnames(connections) <- c("First Word","Second Word","Frequency")
+connections[,1] <- gsub("[[:punct:]]", "",connections[,1]) 
+connections[,2] <- gsub("[[:punct:]]", "",connections[,2]) 
+connections <- filter(connections, connections[,1] != "" & connections[,2] != "")
+```
+```{r}
+library(networkD3)
+connections <- filter(connections,Frequency > 2)
+simpleNetwork(connections,zoom = T)
+
+```
+
+Although our network is relatively sparse, we notice more information from the reports. For instance, the link $\text{BINOCULARS} \Leftrightarrow \text{SAW} \Leftrightarrow \text{SMELLED}$ implies that there's some lucky people out there who have smelling binoculars. We also find $\text{BEARS} \Leftrightarrow \text{DONT} \Leftrightarrow \text{HIND}$, which should likely read "bear don't stand on hind legs". This tells us that most survivors aren't too familiar with bears. 
+
+Beyond this, we need more sighting descriptions to give us a better network.

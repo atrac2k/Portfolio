@@ -9,11 +9,9 @@
 <meta name="generator" content="pandoc" />
 
 
-<meta name="author" content="Alexander Traczyk" />
 
-<meta name="date" content="2018-04-10" />
 
-<title>ts</title>
+<title>Frequency Analysis</title>
 
 <script src="site_libs/jquery-1.11.3/jquery.min.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -184,6 +182,9 @@ $(document).ready(function () {
   <a href="sub.html">Sub-Species Analysis</a>
 </li>
 <li>
+  <a href="nlp.html">Natural Language Process</a>
+</li>
+<li>
   <a href="ts.html">Frequency Analysis</a>
 </li>
 <li>
@@ -201,14 +202,17 @@ $(document).ready(function () {
 
 
 
-<h1 class="title toc-ignore">ts</h1>
-<h4 class="author"><em>Alexander Traczyk</em></h4>
-<h4 class="date"><em>April 10, 2018</em></h4>
+<h1 class="title toc-ignore">Frequency Analysis</h1>
 
 </div>
 
 
-<p>I haven’t done this shit yet. Hold onto your butt.</p>
+<pre class="r"><code>library(ggplot2)
+
+qplot(Year, n, data = bigts, geom = &quot;line&quot;, group = Species,color=Species,show.legend=F)+
+    facet_grid(Species ~ ., scale = &quot;free_y&quot;)+ 
+    geom_vline(xintercept=1967)</code></pre>
+<p><img src="ts_files/figure-html/unnamed-chunk-3-1.png" width="672" /></p>
 
 
 

@@ -7,6 +7,8 @@ navbar:
       href: index.html
     - text: "Sub-Species Analysis"
       href: sub.html
+    - text: "Natural Language Process"
+      href: nlp.html
     - text: "Frequency Analysis"
       href: ts.html
     - text: "About Me"

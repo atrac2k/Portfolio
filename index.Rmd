@@ -45,6 +45,10 @@ The study includes various analysis, briefly described below (click links, or us
 
 An analysis of regional patterns of Bigfoot through unsupervised learning, and general characteristics of these sub-species
 
+### [Natural Language Processing](https://atrac2k.github.io/Portfolio/nlp.html)
+
+We explore frequencies of unigrams and bigrams in Bigfoot survivors descriptions of the evens, and find similarities in the encounters.
+
 ### [Frequency Analysis](https://atrac2k.github.io/Portfolio/ts.html)
 
 Analysis on the frequency of Bigfoot sightings, including predicting future sighting frequency

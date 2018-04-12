@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+
+<meta charset="utf-8" />
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="pandoc" />
+
+
+
+
+<title>Natural Language Process</title>
+
+<script src="site_libs/jquery-1.11.3/jquery.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="site_libs/bootstrap-3.3.5/css/bootstrap.min.css" rel="stylesheet" />
+<script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
+<script src="site_libs/navigation-1.1/tabsets.js"></script>
+<link href="site_libs/highlightjs-1.1/default.css" rel="stylesheet" />
+<script src="site_libs/highlightjs-1.1/highlight.js"></script>
+<script src="site_libs/htmlwidgets-0.9/htmlwidgets.js"></script>
+<script src="site_libs/d3-4.5.0/d3.min.js"></script>
+<script src="site_libs/forceNetwork-binding-0.4/forceNetwork.js"></script>
+
+<style type="text/css">code{white-space: pre;}</style>
+<style type="text/css">
+  pre:not([class]) {
+    background-color: white;
+  }
+</style>
+<script type="text/javascript">
+if (window.hljs && document.readyState && document.readyState === "complete") {
+   window.setTimeout(function() {
+      hljs.initHighlighting();
+   }, 0);
+}
+</script>
+
+
+
+<style type="text/css">
+h1 {
+  font-size: 34px;
+}
+h1.title {
+  font-size: 38px;
+}
+h2 {
+  font-size: 30px;
+}
+h3 {
+  font-size: 24px;
+}
+h4 {
+  font-size: 18px;
+}
+h5 {
+  font-size: 16px;
+}
+h6 {
+  font-size: 12px;
+}
+.table th:not([align]) {
+  text-align: left;
+}
+</style>
+
+
+</head>
+
+<body>
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+code {
+  color: inherit;
+  background-color: rgba(0, 0, 0, 0.04);
+}
+img {
+  max-width:100%;
+  height: auto;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+</style>
+
+
+<style type="text/css">
+/* padding for bootstrap navbar */
+body {
+  padding-top: 51px;
+  padding-bottom: 40px;
+}
+/* offset scroll position for anchor links (for fixed navbar)  */
+.section h1 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+
+.section h2 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h3 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h4 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h5 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h6 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+</style>
+
+<script>
+// manage active state of menu based on current page
+$(document).ready(function () {
+  // active menu anchor
+  href = window.location.pathname
+  href = href.substr(href.lastIndexOf('/') + 1)
+  if (href === "")
+    href = "index.html";
+  var menuAnchor = $('a[href="' + href + '"]');
+
+  // mark it active
+  menuAnchor.parent().addClass('active');
+
+  // if it's got a parent navbar menu mark it active as well
+  menuAnchor.closest('li.dropdown').addClass('active');
+});
+</script>
+
+
+<div class="container-fluid main-container">
+
+<!-- tabsets -->
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+</script>
+
+<!-- code folding -->
+
+
+
+
+
+
+<div class="navbar navbar-default  navbar-fixed-top" role="navigation">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="index.html">Alek's Portfolio</a>
+    </div>
+    <div id="navbar" class="navbar-collapse collapse">
+      <ul class="nav navbar-nav">
+        <li>
+  <a href="index.html">Home</a>
+</li>
+<li>
+  <a href="sub.html">Sub-Species Analysis</a>
+</li>
+<li>
+  <a href="nlp.html">Natural Language Process</a>
+</li>
+<li>
+  <a href="ts.html">Frequency Analysis</a>
+</li>
+<li>
+  <a href="about.html">About Me</a>
+</li>
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        
+      </ul>
+    </div><!--/.nav-collapse -->
+  </div><!--/.container -->
+</div><!--/.navbar -->
+
+<div class="fluid-row" id="header">
+
+
+
+<h1 class="title toc-ignore">Natural Language Process</h1>
+
+</div>
+
+
+<p>Included in our dataset, we are lucky enough to have the full description of each Bigfoot encounter. Through Natural Language Process, we can study the commonalities between sightings. In the following code, we split each description, remove the 3,000 most common words, and keep a running total of each word. Additionally, we find the frequency of bigrams.</p>
+<pre class="r"><code>library(readxl)
+library(httr)
+library(dplyr)
+
+charfreq &lt;- data.frame(NULL)
+charfreq[1,1] &lt;- NA
+charfreq[1,2] &lt;- NA
+
+connections &lt;- data.frame(NULL)
+connections[1,1] &lt;- NA
+connections[1,2] &lt;- NA
+connections[1,3] &lt;- NA
+
+conndf &lt;- data.frame(NULL)
+
+conndf[1:100,1] &lt;- NA
+
+url &lt;- &quot;http://www.rupert.id.au/resources/4000-most-common-english-words-xlsx.xlsx&quot;
+
+GET(url,write_disk(common&lt;-tempfile(fileext=&quot;.xlsx&quot;)))
+common &lt;- read_excel(path=common,sheet=1)
+colnames(common) &lt;- c(&quot;most&quot;)
+common$most &lt;- toupper(common$most)
+
+for (i in 1:nrow(dat)){
+  temp &lt;- strsplit(toupper(as.character(dat[i,1])),&quot; &quot;)
+  temp &lt;- data.frame(temp)
+  temp[,1] &lt;- gsub(&quot;[(),.!?`\&#39;\&quot;#-]&quot;, &quot;&quot;, temp[,1])
+  colnames(temp) &lt;- c(&quot;word&quot;)
+  temp &lt;- anti_join(temp,common,by=c(&quot;word&quot; = &quot;most&quot;))
+  
+  if (nrow(temp) &gt; 1){
+    connfdf &lt;- data.frame(NULL)
+    connfdf[1,1] &lt;- NA
+    connfdf[1,2] &lt;- NA
+    conntemp &lt;- data.frame(as.character(temp[,1]))
+      for (l in 1:(nrow(conntemp)-1)){
+        temp2 &lt;- c(as.character(conntemp[l,1]),as.character(conntemp[l+1,1]))
+        temp2 &lt;- as.data.frame(t(temp2))
+        connfdf &lt;- bind_rows(connfdf,temp2)
+      }
+    connfdf &lt;- connfdf[-1,]
+    conndf &lt;- connfdf %&gt;% group_by(connfdf[,1],connfdf[,2]) %&gt;% summarise(n=n())
+    
+  for (k in 1:nrow(conndf)){
+    if ((!conndf[k,1] %in% connections[,1]) &amp; (!conndf[k,2] %in% connections[,2])){
+      connections[nrow(connections)+1,1] &lt;- conndf[k,1]
+      connections[nrow(connections),2] &lt;- conndf[k,2]
+      connections[nrow(connections),3] &lt;- conndf[k,3]
+    }
+    else {
+      index &lt;- which((connections[,1] %in% conndf[k,1]) &amp; (connections[,2] %in% conndf[k,2]))
+      connections[index,3] &lt;- connections[index,3] + conndf[k,3]
+      }
+  }}
+  
+  temp &lt;- temp %&gt;% group_by(temp[,1]) %&gt;% summarise(n = n())
+  temp &lt;- filter(temp,temp[,1] != &quot;&quot;)
+  if (nrow(temp) &gt; 0){
+    for (j in 1:nrow(temp)){
+      if (!temp[j,1] %in% charfreq[,1]){
+        charfreq[nrow(charfreq)+1,1] &lt;- temp[j,1]
+        charfreq[nrow(charfreq),2] &lt;- temp[j,2]
+      }
+      else {
+        index &lt;- which(charfreq[,1] %in% temp[j,1])
+        charfreq[index,2] &lt;- charfreq[index,2] + temp[j,2]
+      }
+    }
+  }
+
+}</code></pre>
+<p>We first take a look at the 20 most common words:</p>
+<pre class="r"><code>top &lt;- data.frame(head(charfreq[order(charfreq$Frequency,decreasing=T),],20))
+rownames(top) &lt;- c(1:20)
+top</code></pre>
+<pre><code>##       Word Frequency
+## 1    HEARD      6782
+## 2      SAW      5538
+## 3    WOODS      3727
+## 4   LOOKED      3614
+## 5     FEET      3429
+## 6     SAID      3089
+## 7     SEEN      2608
+## 8     CAME      2361
+## 9  BIGFOOT      2355
+## 10 STARTED      2228
+## 11    TOLD      2209
+## 12  TURNED      2068
+## 13 LOOKING      2065
+## 14    MADE      1946
+## 15   YEARS      1944
+## 16     RAN      1874
+## 17   YARDS      1862
+## 18   TREES      1848
+## 19  WALKED      1833
+## 20    TOOK      1713</code></pre>
+<p>From just the top 10 words we can start to make some general characterizations about sightings:</p>
+<ul>
+<li>Since the most common word was “HEARD” we can assume that in most sightings, survivors could hear the big create trudging through the brush (therefore, we can also assume that deaf people have a much lower probability of bigfoot encounters).</li>
+<li>We also notice that number 9 (“BIGFOOT”) tells us that most survivors are smart enough to know the truth.</li>
+<li>As number 3 (“WOODS”) and number 18 (“TREES”) both have to do with forested areas, we solidify the theory that Bigfoot is a woodland creature.</li>
+<li>Somewhat shockingly, people have to mention their foot fetishes so much that it’s number 5 on the word frequency list.</li>
+</ul>
+<p>For a faster glance at the data, we check the following word cloud:</p>
+<pre class="r"><code>library(wordcloud)
+cloud &lt;- filter(charfreq,Frequency &gt; 780)
+wordcloud(cloud$Word,cloud$Frequency,color=&quot;brown&quot;)</code></pre>
+<p><img src="nlp_files/figure-html/unnamed-chunk-4-1.png" width="672" /></p>
+<p>Our wordcloud seems to follow the general patterns of common Bigfoot encounters. The experience is very vocal (SOUNDS,HEARD,SOUNDED), and typically involved seeing the beautiful creature (SAW,LOOKED,LOOKING,SEEN,NOTICED,SIGHTING). Again, typically these encounters seem to be in the forest (TREES,WOODS, CREEK[?]). Lastly, our survivors also seem to be very shallow, focusing on Bigfoots looks ([strong] ARMS, [long] LEGS, [I’m getting lost in Bigfoots] EYES).</p>
+<p>Similarly, we check the most common bigrams:</p>
+<pre class="r"><code>top &lt;- data.frame(head(connections[order(connections$Frequency,decreasing=T),],20))
+rownames(top) &lt;- c(1:20)
+top</code></pre>
+<pre><code>##    First.Word Second.Word Frequency
+## 1           8        FEET       211
+## 2          15     MINUTES       116
+## 3          30       YARDS        98
+## 4           4           5        86
+## 5        BEEN          AN        82
+## 6           5           6        75
+## 7           6           7        67
+## 8    SLEEPING        BAGS        51
+## 9          10       MILES        47
+## 10       ARMS    SWINGING        40
+## 11     LOCKED       DOORS        40
+## 12         25       YEARS        36
+## 13      WHOOP       WHOOP        36
+## 14       SAID        LETS        35
+## 15     SHINED  FLASHLIGHT        34
+## 16         14      INCHES        31
+## 17    SLAMMED      BRAKES        31
+## 18      GOOSE       BUMPS        29
+## 19        HAD           3        27
+## 20    LOOKING     NOTICED        24</code></pre>
+<p>Again, we notice intersting things right away:</p>
+<ul>
+<li>Survivors seem to frequently agree that the animal is around 8 feet tall. From number 13 (“WHOOP WHOOP”), we get a general idea of what a Bigfoot call sounds like, and that most encounters happen at 30 yeards (number 3). Since “ARMS SWINGING” is also such a commonly used bigram, we discover that Bigfoots favorite dance is the Charleston</li>
+<li>We also take note that survivors seem to usually be prepared for their excursions by bringing sleeping bags (number 8), bring flashlights (number 15), and somehow found tents with locking doors (number 11).</li>
+</ul>
+<p>We can also create a network diagram from these bigrams:</p>
+<pre class="r"><code>library(networkD3)
+connections &lt;- filter(connections,Frequency &gt; 2)
+simpleNetwork(connections,zoom = T)</code></pre>
+<div id="htmlwidget-3553979963613daa5b7a" style="width:672px;height:480px;" class="forceNetwork html-widget"></div>
+<script type="application/json" data-for="htmlwidget-3553979963613daa5b7a">{"x":{"links":{"source":[61,172,1,16,43,59,122,134,139,142,147,150,159,216,230,232,247,255,272,308,322,0,3,18,74,91,146,181,244,282,34,182,13,49,126,140,157,25,31,103,9,201,229,251,273,301,305,22,26,29,56,110,263,27,158,192,208,6,66,80,188,189,197,280,152,174,264,290,289,218,33,114,7,149,153,37,283,52,30,51,71,226,291,221,23,97,278,311,115,95,298,306,132,253,180,21,12,233,101,274,138,262,2,123,261,169,187,234,176,281,86,62,42,237,240,163,41,93,217,112,99,19,209,68,78,82,44,175,246,302,131,267,249,242,293,287,219,199,316,265,299,162,39,235,15,32,144,118,243,167,5,220,309,155,314,313,224,36,245,57,294,165,196,79,227,47,212,109,104,54,81,137,106,108,107,85,276,258,40,303],"target":[247,304,136,322,147,46,88,216,318,183,17,259,145,213,129,166,266,127,60,45,113,190,150,320,181,87,244,146,179,200,120,206,307,285,204,13,49,250,90,83,11,70,260,251,223,168,277,26,29,31,110,154,53,33,252,248,207,161,284,186,8,228,73,119,189,96,210,48,236,215,34,269,192,151,64,0,194,211,177,10,125,319,121,178,198,135,130,311,205,295,297,14,92,76,111,225,321,310,124,184,67,65,4,256,239,141,195,257,28,66,156,77,270,315,143,72,191,281,105,100,128,24,231,58,78,148,202,296,133,286,279,131,94,292,268,287,288,275,317,55,254,238,39,235,19,35,171,117,243,241,20,69,173,155,185,313,214,38,75,102,242,304,98,79,164,50,160,170,84,54,116,222,203,271,193,276,89,300,312,63],"value":[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],"colour":["#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666"]},"nodes":{"name":["10","100","1000","1030","1100","12","14","15","18","1970","1977","1983","200","22","220","230","25","3","30","300","34","350400","4","40","400","45","5","50","57","6","600","7","70","75","8","80","8Â€™","930","9Â€™","Â","Â€ŒWHOOP","ABANDONED","ABOMINABLE","ACRES","ALBUQUERQUE","ALLOWED","AN","ANNE","APPEARED","ARMS","ARUNDEL","AUGUST","AVID","BAGS","BAM","BASS","BEARS","BEAVER","BEDS","BEEN","BEGAN","BINOCULARS","BIRDS","BOARDMAN","BOOTS","BRAKES","BREAKING","BUMPS","BUNK","BYRNE","CALIFORNIA","CAMPED","CANAL","CAROLINA","CAUGHT","CHATTER","CHILLS","CHIRPING","CHOOM","CLACK","CLAW","CLE","COCKED","COLORED","COLYER","CONDUCTED","COON","COUGAR","COULDNT","COURTNEY","COVERED","COYOTE","COYOTES","CRACKING","CRAP","CRASHING","CREATURES","CRICKETS","CRISTO","CROW","CULVERT","CUTTING","DAMS","DARKER","DARYL","DEE","DEL","DES","DOLLY","DONNA","DONT","DOORS","DRAINAGE","EARLIER","EARS","EDITORS","ELUM","EN","ES","FALLEN","FEET","FELL","FELT","FIRED","FIREWOOD","FISHED","FLARED","FLASHLIGHT","FLIES","FOLLOWED","FORT","FOUL","FOXES","FRANCISCO","FRIENDS","FROGS","FT","GIFFORD","GOOSE","GOTTEN","GRABBED","GREENS","GREW","GROUSE","GROVER","GUESSING","GUYS","HAD","HAMMER","HARRY","HEARD","HENDERSONS","HIKED","HIKING","HIND","HOO","HOUND","HUNCHED","HUNTED","IM","IMAGINATIONS","INCHES","INVESTIGATORS","IRRIGATION","ISLE","IT","IVE","JACK","JEEP","JOHN","KEATHLEY","KRANTZ","L","LANES","LARGER","LAS","LASTED","LBS","LEAVES","LETS","LOCKED","LOOKED","LOOKING","LOUDER","LOUIS","MAGNUM","MARKS","MATT","MEASURED","MILE","MILES","MINES","MINUTES","MOINES","MOMENTARILY","MONEYMAKER","MONTE","MOUNTAINS","MPH","NEATLY","NECKS","NEVADA","NM","NORTE","NOSTRILS","NOTE","NOTICED","NOVEMBER","OCCURRED","OHIO","ONES","OUTDOORS","OVERACTIVE","OWNED","PANS","PANTS","PARENTS","PEE","PEED","PEEPING","PETER","PICKING","PINCHOT","POPULATED","POTS","POUNDS","PRAYING","PRESQUE","PRINTS","RAID","RAN","RECORDINGS","REPORTS","RIDING","RIPPED","ROC","ROCKS","ROLLED","RON","ROTTEN","RUFFED","RUSSELL","S","SADDLE","SAID","SAMURAI","SAN","SAW","SCANNING","SCARING","SECONDS","SEEMED","SEEN","SENT","SHAKEN","SHINED","SHOTGUN","SHREDS","SIERRA","SIGHTINGS","SIREN","SKUNK","SLAMMED","SLEEPING","SMALLER","SMALLMOUTH","SMELLED","SMELLING","SNAPS","SNOUT","SNOWMAN","SODS","SOUNDS","SPARSELY","ST","STACKED","STAN","STATES","STATIONED","STENCH","STEPPED","STICKS","STOOD","STOPPED","STRIDE","SWINGING","TALKIE","THUD","TOM","TOSSING","TRACKS","TRIPPED","TURNS","TWIG","U","UNDERBRUSH","VEGAS","VERSA","VICE","VIOLENTLY","VISTA","WALKED","WALKIE","WALTER","WAS","WASHINGTON","WEIGHED","WENT","WERE","WESTBOUND","WHEELER","WHOOP","WHOOPÂ€","WHUH","WINCHESTER","WINDOWS","WINDSHIELD","WIPERS","WOODS","WOULDNT","YARDS","YDS","YEARS"],"group":[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],"nodesize":[8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8]},"options":{"NodeID":"name","Group":"group","colourScale":"d3.scaleOrdinal(['#3182bd'])","fontSize":7,"fontFamily":"serif","clickTextSize":17.5,"linkDistance":50,"linkWidth":"'1.5px'.toString()","charge":-30,"opacity":0.6,"zoom":true,"legend":false,"arrows":false,"nodesize":true,"radiusCalculation":"d.nodesize","bounded":false,"opacityNoHover":1,"clickAction":null}},"evals":[],"jsHooks":[]}</script>
+<p>Although our network is relatively sparse, we notice more information from the reports. For instance, the link <span class="math inline">\(\text{BINOCULARS} \Leftrightarrow \text{SAW} \Leftrightarrow \text{SMELLED}\)</span> implies that there’s some lucky people out there who have smelling binoculars. We also find <span class="math inline">\(\text{BEARS} \Leftrightarrow \text{DONT} \Leftrightarrow \text{HIND}\)</span>, which should likely read “bear don’t stand on hind legs”. This tells us that most survivors aren’t too familiar with bears.</p>
+<p>Beyond this, we need more sighting descriptions to give us a better network.</p>
+
+
+
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+function bootstrapStylePandocTables() {
+  $('tr.header').parent('thead').parent('table').addClass('table table-condensed');
+}
+$(document).ready(function () {
+  bootstrapStylePandocTables();
+});
+
+
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

@@ -1,6 +1,5 @@
 ---
 title: "Frequency Analysis"
-output: html_document
 ---
 
 ```{r, message=FALSE, warning=FALSE, include=FALSE}
@@ -13,8 +12,12 @@ library(EMCluster)
 
 ```{r, echo=FALSE, warning=FALSE}
 dat <- read.csv("C:/Users/ATrac/OneDrive/Documents/Web/atraczyk.github.io/bfro_reports_geocoded.csv")
-dat <- read.csv("C:/Users/ATrac/OneDrive/Documents/Web/atraczyk.github.io/bfro_reports_geocoded.csv")
 dat <- dat[!is.na(dat$latitude)&!is.na(dat$longitude),]
+
+set.seed(0)
+test <- simple.init(dat[,c("latitude","longitude")],nclass=7)
+test <- shortemcluster(dat[,c("latitude","longitude")],test)
+test2 <- emcluster(dat[,c("latitude","longitude")],test,assign.class = T)
 
 dat[,"Class"] <- as.factor(test2$class)
 dat[,"Species"] <- ""
@@ -51,7 +54,7 @@ bigts[,1:3] <- NA
 species <- c("Mogollon","Grassman","Momo","Wendigo","Skunk Ape","Sasquatch","Grandis Alekus")
 
 for (k in 1:7){
-  temp <- filter(dat,dat$Species == as.character(rownames(ts)[k]))
+  temp <- filter(dat,dat$Species == as.character(species[k]))
   for (i in 1:97){
     temp2 <- filter(temp,temp$Year == (i+1920))
     bigts[(k)+i,1] <- i+1920

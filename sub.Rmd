@@ -1,6 +1,5 @@
 ---
 title: "Sub-Species Analysis"
-output: html_document
 ---
 
 As most animals with a range the size of the United States tend to have more specific species within smaller areas (for instance, black, brown, or grizzly bears), it's likely to be more beneficial to specify smaller Bigfoot ranges. Some theories already propose such sub-species of Bigfoot exist (Sasquatch in the Pacific Northwest, Grassman in Ohio, Skunk Ape in Florida). By finding these ranges, we should expect each sub-species to act somewhat differently.
@@ -195,10 +194,10 @@ We take note from the above plot of sightings by month, that in most sub-species
 
 ```{r, message=FALSE, warning=FALSE}
 qplot(round(temperature_low,0),data=dat,facets=Species~.,geom="histogram",fill=Species,binwidth=2,main="Sightings By Low Temperature")+
-  scale_x_continuous(name="Low Temperature")
+  scale_x_continuous(name="Low Temperature") + geom_vline(xintercept=32)
 ```
 
-When viewing the data by low temperature, we notice that sightings when the temperature is blow freezing (32) tend to become far less frequent. This does give quite the credibility to our hibernation theory. This seems to also closely resemble the hibernation patterns of bears in North America, which tend to begin hibernation just as temperatures are nearing freezing.
+When viewing the data by low temperature, we notice that sightings when the temperature is blow freezing (verticle line at 32 degrees) tend to become far less frequent. This does give quite the credibility to our hibernation theory. This seems to also closely resemble the hibernation patterns of bears in North America, which tend to begin hibernation just as temperatures are nearing freezing.
 
 #### Diet
 
