@@ -1,0 +1,20 @@
+---
+title: "sources"
+---
+
+## Data:
+
+ Bigfoot Data: https://data.world/timothyrenner/bfro-sightings-data
+ 
+ (I used the file "bfro_reports_geocoded.csv")
+ 
+## Images:
+
+  Bigfoot Image: http://images.gawker.com/195g0l3khm7z0png/c_fit,fl_progressive,q_80,w_636.png
+  
+  Al Borland Image: https://decider.com/2017/10/20/home-improvements-al-borland-needs-to-be-a-gay-icon/
+  
+## Shout outs:
+
+  * My mum
+  * Papa Johns

@@ -56,3 +56,7 @@ Analysis on the frequency of Bigfoot sightings, including predicting future sigh
 ### [About the Author](https://atrac2k.github.io/Portfolio/about.html)
 
 Learn more about the cool guy who wrote this (and is actually like 80% sane)
+
+### [Sources](https://atrac2k.github.io/Portfolio/sources.html)
+
+Sources for this project
