@@ -297,7 +297,7 @@ Html_file.write(html)
 Html_file.close()
 ```
 
-<iframe src="C:/Users/ATrac/OneDrive/Documents/Web/Portfolio/Bokeh Plot.html"
+<iframe src="Bokeh Plot.html"
     style="max-width = 100%"
     sandbox="allow-same-origin allow-scripts"
     width="100%"
@@ -314,7 +314,7 @@ Take note of the increase in Bigfoot sightings from the 1950's and 60's (figure 
 As beings of this earth, we need to learn how to live with our shy neighbors. Instead of doing something rash, like learning to coexist with the environment, we need to show Bigfoot the wonders of industrialization.
 
 We can start by providing rent controlled housing for the Bigfeet (the twigs to U.S dollars exchange is poor). A possible rendering of such housing is below:
-```{r, include=FALSE}
+```{r, echo=FALSE}
 knitr::include_graphics('./housing.jpg')
 ```
 
