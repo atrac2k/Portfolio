@@ -22,7 +22,7 @@
 <script src="site_libs/navigation-1.1/tabsets.js"></script>
 <link href="site_libs/highlightjs-1.1/default.css" rel="stylesheet" />
 <script src="site_libs/highlightjs-1.1/highlight.js"></script>
-<script src="site_libs/htmlwidgets-0.9/htmlwidgets.js"></script>
+<script src="site_libs/htmlwidgets-1.0/htmlwidgets.js"></script>
 <script src="site_libs/d3-4.5.0/d3.min.js"></script>
 <script src="site_libs/forceNetwork-binding-0.4/forceNetwork.js"></script>
 
@@ -193,6 +193,9 @@ $(document).ready(function () {
 <li>
   <a href="about.html">About Me</a>
 </li>
+<li>
+  <a href="sources.html">Sources</a>
+</li>
       </ul>
       <ul class="nav navbar-nav navbar-right">
         
@@ -214,6 +217,9 @@ $(document).ready(function () {
 <pre class="r"><code>library(readxl)
 library(httr)
 library(dplyr)
+library(hunspell)
+
+dat &lt;- read.csv(&quot;C:/Users/ATrac/OneDrive/Documents/Web/atraczyk.github.io/bfro_reports_geocoded.csv&quot;)
 
 charfreq &lt;- data.frame(NULL)
 charfreq[1,1] &lt;- NA
@@ -237,35 +243,58 @@ common$most &lt;- toupper(common$most)
 
 for (i in 1:nrow(dat)){
   temp &lt;- strsplit(toupper(as.character(dat[i,1])),&quot; &quot;)
+  if (length(temp[[1]])&gt;0){
   temp &lt;- data.frame(temp)
-  temp[,1] &lt;- gsub(&quot;[(),.!?`\&#39;\&quot;#-]&quot;, &quot;&quot;, temp[,1])
+  temp[,1] &lt;- gsub(&quot;[(),.!?`\&#39;\&quot;#-;]&quot;, &quot;&quot;, temp[,1])
+  temp[,1] &lt;- gsub(&quot;[[:punct:]]&quot;, &quot;&quot;,temp[,1]) 
+  temp[,1] &lt;- str_replace_all(temp[,1], &quot;[^[:alnum:]]&quot;, &quot;&quot;)
+  temp &lt;- filter(temp,!is.na(temp[,1]))
+  temp &lt;- filter(temp,temp[,1] != &quot;&quot;)
   colnames(temp) &lt;- c(&quot;word&quot;)
   temp &lt;- anti_join(temp,common,by=c(&quot;word&quot; = &quot;most&quot;))
+  temp &lt;- filter(temp, word != &quot;WAS&quot; &amp; word != &quot;HAD&quot; &amp; word != &quot;WERE&quot; &amp; word != &quot;IS&quot; &amp; word != &quot;BEEN&quot; &amp; word != &quot;AN&quot; &amp; word != &quot;WENT&quot; &amp; word != &quot;GOT&quot; &amp;
+                       word != &quot;DID&quot; &amp; word != &quot;DIDNT&quot; &amp; word != &quot;ARE&quot; &amp; word != &quot;DONT&quot; &amp; word != &quot;WASNT&quot; &amp; word != &quot;HAS&quot; &amp; word != &quot;&amp;&quot; &amp; word != &quot;IM&quot; &amp;
+                       word != &quot;IVE&quot; &amp; word != &quot;ARENT&quot; &amp; word != &quot;THINGS&quot; &amp; word != &quot;COUNLDNT&quot; &amp; !grepl(&quot;*HTTPS*&quot;,temp$word))
+  if (nrow(temp) &gt; 0){
+  for( j in 1:nrow(temp)){
+    if (length(hunspell(temp[i,1]))[[1]]&gt;0){
+      temp[j,1] &lt;- hunspell_suggest(temp[j,1])[[1]][1]
+    }
+    if (length(hunspell_stem(temp[j,1])[[1]]) &gt; 0){
+      temp[j,1] &lt;- hunspell_stem(temp[j,1])[[1]][length(hunspell_stem(temp[j,1])[[1]])]
+    }
+  }
+  temp[,1] &lt;- toupper(temp[,1])
+  colnames(temp) &lt;- c(&quot;word&quot;)
+  temp &lt;- anti_join(temp,common,by=c(&quot;word&quot; = &quot;most&quot;))
+  temp &lt;- filter(temp, word != &quot;WAS&quot; &amp; word != &quot;HAD&quot; &amp; word != &quot;WERE&quot; &amp; word != &quot;IS&quot; &amp; word != &quot;BEEN&quot; &amp; word != &quot;AN&quot; &amp; word != &quot;WENT&quot; &amp; word != &quot;GOT&quot; &amp;
+                       word != &quot;DID&quot; &amp; word != &quot;DIDNT&quot; &amp; word != &quot;ARE&quot; &amp; word != &quot;DONT&quot; &amp; word != &quot;WASNT&quot; &amp; word != &quot;HAS&quot; &amp; word != &quot;&amp;&quot; &amp; word != &quot;IM&quot; &amp;
+                       word != &quot;IVE&quot; &amp; word != &quot;ARENT&quot; &amp; word != &quot;THINGS&quot; &amp; word != &quot;COUNLDNT&quot; &amp; !grepl(&quot;*HTTPS*&quot;,temp$word))
   
   if (nrow(temp) &gt; 1){
     connfdf &lt;- data.frame(NULL)
     connfdf[1,1] &lt;- NA
     connfdf[1,2] &lt;- NA
     conntemp &lt;- data.frame(as.character(temp[,1]))
-      for (l in 1:(nrow(conntemp)-1)){
-        temp2 &lt;- c(as.character(conntemp[l,1]),as.character(conntemp[l+1,1]))
-        temp2 &lt;- as.data.frame(t(temp2))
-        connfdf &lt;- bind_rows(connfdf,temp2)
-      }
+    for (l in 1:(nrow(conntemp)-1)){
+      temp2 &lt;- c(as.character(conntemp[l,1]),as.character(conntemp[l+1,1]))
+      temp2 &lt;- as.data.frame(t(temp2))
+      connfdf &lt;- bind_rows(connfdf,temp2)
+    }
     connfdf &lt;- connfdf[-1,]
     conndf &lt;- connfdf %&gt;% group_by(connfdf[,1],connfdf[,2]) %&gt;% summarise(n=n())
     
-  for (k in 1:nrow(conndf)){
-    if ((!conndf[k,1] %in% connections[,1]) &amp; (!conndf[k,2] %in% connections[,2])){
-      connections[nrow(connections)+1,1] &lt;- conndf[k,1]
-      connections[nrow(connections),2] &lt;- conndf[k,2]
-      connections[nrow(connections),3] &lt;- conndf[k,3]
-    }
-    else {
-      index &lt;- which((connections[,1] %in% conndf[k,1]) &amp; (connections[,2] %in% conndf[k,2]))
-      connections[index,3] &lt;- connections[index,3] + conndf[k,3]
+    for (k in 1:nrow(conndf)){
+      if ((!conndf[k,1] %in% connections[,1]) &amp; (!conndf[k,2] %in% connections[,2])){
+        connections[nrow(connections)+1,1] &lt;- conndf[k,1]
+        connections[nrow(connections),2] &lt;- conndf[k,2]
+        connections[nrow(connections),3] &lt;- conndf[k,3]
       }
-  }}
+      else {
+        index &lt;- which((connections[,1] %in% conndf[k,1]) &amp; (connections[,2] %in% conndf[k,2]))
+        connections[index,3] &lt;- connections[index,3] + conndf[k,3]
+      }
+    }}
   
   temp &lt;- temp %&gt;% group_by(temp[,1]) %&gt;% summarise(n = n())
   temp &lt;- filter(temp,temp[,1] != &quot;&quot;)
@@ -281,83 +310,83 @@ for (i in 1:nrow(dat)){
       }
     }
   }
-
+  }
+  }
 }</code></pre>
 <p>We first take a look at the 20 most common words:</p>
 <pre class="r"><code>top &lt;- data.frame(head(charfreq[order(charfreq$Frequency,decreasing=T),],20))
 rownames(top) &lt;- c(1:20)
 top</code></pre>
-<pre><code>##       Word Frequency
-## 1    HEARD      6782
-## 2      SAW      5538
-## 3    WOODS      3727
-## 4   LOOKED      3614
-## 5     FEET      3429
-## 6     SAID      3089
-## 7     SEEN      2608
-## 8     CAME      2361
-## 9  BIGFOOT      2355
-## 10 STARTED      2228
-## 11    TOLD      2209
-## 12  TURNED      2068
-## 13 LOOKING      2065
-## 14    MADE      1946
-## 15   YEARS      1944
-## 16     RAN      1874
-## 17   YARDS      1862
-## 18   TREES      1848
-## 19  WALKED      1833
-## 20    TOOK      1713</code></pre>
-<p>From just the top 10 words we can start to make some general characterizations about sightings:</p>
-<ul>
-<li>Since the most common word was “HEARD” we can assume that in most sightings, survivors could hear the big create trudging through the brush (therefore, we can also assume that deaf people have a much lower probability of bigfoot encounters).</li>
-<li>We also notice that number 9 (“BIGFOOT”) tells us that most survivors are smart enough to know the truth.</li>
-<li>As number 3 (“WOODS”) and number 18 (“TREES”) both have to do with forested areas, we solidify the theory that Bigfoot is a woodland creature.</li>
-<li>Somewhat shockingly, people have to mention their foot fetishes so much that it’s number 5 on the word frequency list.</li>
-</ul>
+<pre><code>##        Word Frequency
+## 1      HARE      7293
+## 2      DAIS      3223
+## 3   BIGFOOT      2525
+## 4      ACME      2477
+## 5      DOLT      2316
+## 6      LIME      2204
+## 7       TUN      2187
+## 8      DAME      2064
+## 9      TOOK      1791
+## 10  STOPPED      1681
+## 11   MINUET      1554
+## 12    CREEK      1419
+## 13     STUD      1416
+## 14     ROVE      1117
+## 15 COULDN&#39;T      1110
+## 16     VAMP      1036
+## 17      GEL       989
+## 18     SIFT       943
+## 19      RAM       905
+## 20     HONE       891</code></pre>
 <p>For a faster glance at the data, we check the following word cloud:</p>
 <pre class="r"><code>library(wordcloud)
 cloud &lt;- filter(charfreq,Frequency &gt; 780)
 wordcloud(cloud$Word,cloud$Frequency,color=&quot;brown&quot;)</code></pre>
 <p><img src="nlp_files/figure-html/unnamed-chunk-4-1.png" width="672" /></p>
-<p>Our wordcloud seems to follow the general patterns of common Bigfoot encounters. The experience is very vocal (SOUNDS,HEARD,SOUNDED), and typically involved seeing the beautiful creature (SAW,LOOKED,LOOKING,SEEN,NOTICED,SIGHTING). Again, typically these encounters seem to be in the forest (TREES,WOODS, CREEK[?]). Lastly, our survivors also seem to be very shallow, focusing on Bigfoots looks ([strong] ARMS, [long] LEGS, [I’m getting lost in Bigfoots] EYES).</p>
+<p>From just the top 20 words, and the wordcloud we can start to make some general characterizations about sightings:</p>
+<ul>
+<li>After <code>hunspell</code>’s spell check, and root word finder, the people who have Bigfoot sightings end up being very aristocratic. Most survivors seem to be nobility (DAIS [#2], a throne), and are oddly worried about missing their stately balls (MINUET [#11]). Most sightings seem to occur to well stocked hunting parties (TUN [#7] a cask of wine, LIME [#6] for gin and tonics), trying to catch HARE’s [#1] and roadrunners (ACME [#4]) for dinner.</li>
+<li>The survivors also seem to be relatively sexist (DAME [#8], and STUD [#13]), and are always ready to impress the opposite sex with their GEL[led] hair [#17]</li>
+<li>We take note that since BIGFOOT [#3] is so high on the list, these survivors know the truth.</li>
+</ul>
 <p>Similarly, we check the most common bigrams:</p>
 <pre class="r"><code>top &lt;- data.frame(head(connections[order(connections$Frequency,decreasing=T),],20))
 rownames(top) &lt;- c(1:20)
 top</code></pre>
 <pre><code>##    First.Word Second.Word Frequency
-## 1           8        FEET       211
-## 2          15     MINUTES       116
-## 3          30       YARDS        98
-## 4           4           5        86
-## 5        BEEN          AN        82
-## 6           5           6        75
-## 7           6           7        67
-## 8    SLEEPING        BAGS        51
-## 9          10       MILES        47
-## 10       ARMS    SWINGING        40
-## 11     LOCKED       DOORS        40
-## 12         25       YEARS        36
-## 13      WHOOP       WHOOP        36
-## 14       SAID        LETS        35
-## 15     SHINED  FLASHLIGHT        34
-## 16         14      INCHES        31
-## 17    SLAMMED      BRAKES        31
-## 18      GOOSE       BUMPS        29
-## 19        HAD           3        27
-## 20    LOOKING     NOTICED        24</code></pre>
+## 1       NICHE       NICHE       133
+## 2         HID         GEL        87
+## 3           1           1        35
+## 4       GUISE        BUMP        31
+## 5         GAD         BIN        23
+## 6    NOVEMBER          HT        16
+## 7      NEVADA  CALIFORNIA        15
+## 8      SPARSE    POPULATE        15
+## 9       HARRY   HENDERSON        15
+## 10          N        SILL        15
+## 11     COYOTE      COUGAR        12
+## 12   SNAPPING        TWIG        12
+## 13      STEIN    COURTNEY        12
+## 14       GRUE        LOUR        11
+## 15        SAN   FRANCISCO        11
+## 16      CHIDE        TOAD        10
+## 17 WASHINGTON      STATES         9
+## 18     HOLLOW      HOLLOW         9
+## 19 ABOMINABLE     SNOWMAN         9
+## 20         CL         ELM         9</code></pre>
 <p>Again, we notice intersting things right away:</p>
 <ul>
-<li>Survivors seem to frequently agree that the animal is around 8 feet tall. From number 13 (“WHOOP WHOOP”), we get a general idea of what a Bigfoot call sounds like, and that most encounters happen at 30 yeards (number 3). Since “ARMS SWINGING” is also such a commonly used bigram, we discover that Bigfoots favorite dance is the Charleston</li>
-<li>We also take note that survivors seem to usually be prepared for their excursions by bringing sleeping bags (number 8), bring flashlights (number 15), and somehow found tents with locking doors (number 11).</li>
+<li>Most survivors were smart enough to HIDe their GEL [#2], because they smartly knew they didn’t have enough to share with Bigfoot.</li>
+<li>Surprisingly, no one seems to relate Bigfoot to Chewbaca, but instead, to the more realistic HARRY and the HENDERSONs [#9].</li>
+<li>The survivors also seem to have sort sort of obsesive compulsive disorder, repeating words (NICHE NICHE [#1], l l [#3], HOLLOW HOLLOW [#18]).</li>
 </ul>
 <p>We can also create a network diagram from these bigrams:</p>
 <pre class="r"><code>library(networkD3)
-connections &lt;- filter(connections,Frequency &gt; 2)
+connections &lt;- filter(connections,Frequency &gt; 3)
 simpleNetwork(connections,zoom = T)</code></pre>
-<div id="htmlwidget-3553979963613daa5b7a" style="width:672px;height:480px;" class="forceNetwork html-widget"></div>
-<script type="application/json" data-for="htmlwidget-3553979963613daa5b7a">{"x":{"links":{"source":[61,172,1,16,43,59,122,134,139,142,147,150,159,216,230,232,247,255,272,308,322,0,3,18,74,91,146,181,244,282,34,182,13,49,126,140,157,25,31,103,9,201,229,251,273,301,305,22,26,29,56,110,263,27,158,192,208,6,66,80,188,189,197,280,152,174,264,290,289,218,33,114,7,149,153,37,283,52,30,51,71,226,291,221,23,97,278,311,115,95,298,306,132,253,180,21,12,233,101,274,138,262,2,123,261,169,187,234,176,281,86,62,42,237,240,163,41,93,217,112,99,19,209,68,78,82,44,175,246,302,131,267,249,242,293,287,219,199,316,265,299,162,39,235,15,32,144,118,243,167,5,220,309,155,314,313,224,36,245,57,294,165,196,79,227,47,212,109,104,54,81,137,106,108,107,85,276,258,40,303],"target":[247,304,136,322,147,46,88,216,318,183,17,259,145,213,129,166,266,127,60,45,113,190,150,320,181,87,244,146,179,200,120,206,307,285,204,13,49,250,90,83,11,70,260,251,223,168,277,26,29,31,110,154,53,33,252,248,207,161,284,186,8,228,73,119,189,96,210,48,236,215,34,269,192,151,64,0,194,211,177,10,125,319,121,178,198,135,130,311,205,295,297,14,92,76,111,225,321,310,124,184,67,65,4,256,239,141,195,257,28,66,156,77,270,315,143,72,191,281,105,100,128,24,231,58,78,148,202,296,133,286,279,131,94,292,268,287,288,275,317,55,254,238,39,235,19,35,171,117,243,241,20,69,173,155,185,313,214,38,75,102,242,304,98,79,164,50,160,170,84,54,116,222,203,271,193,276,89,300,312,63],"value":[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],"colour":["#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666"]},"nodes":{"name":["10","100","1000","1030","1100","12","14","15","18","1970","1977","1983","200","22","220","230","25","3","30","300","34","350400","4","40","400","45","5","50","57","6","600","7","70","75","8","80","8Â€™","930","9Â€™","Â","Â€ŒWHOOP","ABANDONED","ABOMINABLE","ACRES","ALBUQUERQUE","ALLOWED","AN","ANNE","APPEARED","ARMS","ARUNDEL","AUGUST","AVID","BAGS","BAM","BASS","BEARS","BEAVER","BEDS","BEEN","BEGAN","BINOCULARS","BIRDS","BOARDMAN","BOOTS","BRAKES","BREAKING","BUMPS","BUNK","BYRNE","CALIFORNIA","CAMPED","CANAL","CAROLINA","CAUGHT","CHATTER","CHILLS","CHIRPING","CHOOM","CLACK","CLAW","CLE","COCKED","COLORED","COLYER","CONDUCTED","COON","COUGAR","COULDNT","COURTNEY","COVERED","COYOTE","COYOTES","CRACKING","CRAP","CRASHING","CREATURES","CRICKETS","CRISTO","CROW","CULVERT","CUTTING","DAMS","DARKER","DARYL","DEE","DEL","DES","DOLLY","DONNA","DONT","DOORS","DRAINAGE","EARLIER","EARS","EDITORS","ELUM","EN","ES","FALLEN","FEET","FELL","FELT","FIRED","FIREWOOD","FISHED","FLARED","FLASHLIGHT","FLIES","FOLLOWED","FORT","FOUL","FOXES","FRANCISCO","FRIENDS","FROGS","FT","GIFFORD","GOOSE","GOTTEN","GRABBED","GREENS","GREW","GROUSE","GROVER","GUESSING","GUYS","HAD","HAMMER","HARRY","HEARD","HENDERSONS","HIKED","HIKING","HIND","HOO","HOUND","HUNCHED","HUNTED","IM","IMAGINATIONS","INCHES","INVESTIGATORS","IRRIGATION","ISLE","IT","IVE","JACK","JEEP","JOHN","KEATHLEY","KRANTZ","L","LANES","LARGER","LAS","LASTED","LBS","LEAVES","LETS","LOCKED","LOOKED","LOOKING","LOUDER","LOUIS","MAGNUM","MARKS","MATT","MEASURED","MILE","MILES","MINES","MINUTES","MOINES","MOMENTARILY","MONEYMAKER","MONTE","MOUNTAINS","MPH","NEATLY","NECKS","NEVADA","NM","NORTE","NOSTRILS","NOTE","NOTICED","NOVEMBER","OCCURRED","OHIO","ONES","OUTDOORS","OVERACTIVE","OWNED","PANS","PANTS","PARENTS","PEE","PEED","PEEPING","PETER","PICKING","PINCHOT","POPULATED","POTS","POUNDS","PRAYING","PRESQUE","PRINTS","RAID","RAN","RECORDINGS","REPORTS","RIDING","RIPPED","ROC","ROCKS","ROLLED","RON","ROTTEN","RUFFED","RUSSELL","S","SADDLE","SAID","SAMURAI","SAN","SAW","SCANNING","SCARING","SECONDS","SEEMED","SEEN","SENT","SHAKEN","SHINED","SHOTGUN","SHREDS","SIERRA","SIGHTINGS","SIREN","SKUNK","SLAMMED","SLEEPING","SMALLER","SMALLMOUTH","SMELLED","SMELLING","SNAPS","SNOUT","SNOWMAN","SODS","SOUNDS","SPARSELY","ST","STACKED","STAN","STATES","STATIONED","STENCH","STEPPED","STICKS","STOOD","STOPPED","STRIDE","SWINGING","TALKIE","THUD","TOM","TOSSING","TRACKS","TRIPPED","TURNS","TWIG","U","UNDERBRUSH","VEGAS","VERSA","VICE","VIOLENTLY","VISTA","WALKED","WALKIE","WALTER","WAS","WASHINGTON","WEIGHED","WENT","WERE","WESTBOUND","WHEELER","WHOOP","WHOOPÂ€","WHUH","WINCHESTER","WINDOWS","WINDSHIELD","WIPERS","WOODS","WOULDNT","YARDS","YDS","YEARS"],"group":[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],"nodesize":[8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8]},"options":{"NodeID":"name","Group":"group","colourScale":"d3.scaleOrdinal(['#3182bd'])","fontSize":7,"fontFamily":"serif","clickTextSize":17.5,"linkDistance":50,"linkWidth":"'1.5px'.toString()","charge":-30,"opacity":0.6,"zoom":true,"legend":false,"arrows":false,"nodesize":true,"radiusCalculation":"d.nodesize","bounded":false,"opacityNoHover":1,"clickAction":null}},"evals":[],"jsHooks":[]}</script>
-<p>Although our network is relatively sparse, we notice more information from the reports. For instance, the link <span class="math inline">\(\text{BINOCULARS} \Leftrightarrow \text{SAW} \Leftrightarrow \text{SMELLED}\)</span> implies that there’s some lucky people out there who have smelling binoculars. We also find <span class="math inline">\(\text{BEARS} \Leftrightarrow \text{DONT} \Leftrightarrow \text{HIND}\)</span>, which should likely read “bear don’t stand on hind legs”. This tells us that most survivors aren’t too familiar with bears.</p>
+<div id="htmlwidget-b66319ed48971cd751c8" style="width:672px;height:480px;" class="forceNetwork html-widget"></div>
+<script type="application/json" data-for="htmlwidget-b66319ed48971cd751c8">{"x":{"links":{"source":[47,48,124,136,138,172,3,15,42,66,72,100,150,183,35,76,126,26,70,113,9,53,11,57,68,111,123,131,152,176,95,104,117,127,139,90,114,120,159,8,80,18,112,148,157,158,20,178,10,75,156,93,50,77,56,169,146,67,180,37,19,175,151,142,105,39,0,181,140,145,33,32,17,110,129,74,164,46,81,103,101,62,130,82,171,2,61,87,27,89,168,135,174,118,132,71,88,79,108,7,41,28,29,155],"target":[91,43,179,121,172,6,1,115,162,16,97,153,184,23,30,45,165,167,113,96,36,9,131,142,123,22,173,44,122,154,5,86,163,182,143,55,83,159,125,25,67,157,112,177,58,161,178,156,147,78,106,158,102,52,14,54,170,84,94,63,51,64,65,68,69,39,0,4,116,119,92,32,59,144,166,21,128,46,81,103,107,137,141,82,73,149,98,24,27,13,99,60,160,85,109,12,134,79,38,133,34,49,40,31],"value":[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],"colour":["#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666","#666"]},"nodes":{"name":["1","AB","ABOMINABLE","ABUT","ACE","ACME","ADJACENT","ANNE","APE","APPROX","ARES","ARID","ARRANT","BARREN","BI PEDAL","BIGFOOT","BIN","BOBCAT","BREACH","BRO","BROTH","BUMP","CALIFORNIA","CAMPSITE","CANAL","CANNOT","CHIDE","CHUM","CL","COERCE","COUGAR","COURTNEY","COVE","COWORKER","COY","COYOTE","CREEK","CRICKET","CRISCO","CROUCH","DARLENE","DARYL","DEW","DINT","DOLT","DROPPED","DUKE","ED","EH","ELM","ENLARGE","EXPEDITE","FALCON","FARMHOUSE","FELL","FIREWORK","FOOTFALL","FOOTHILL","FOOTPRINT","FOX","FRANCISCO","FRANK","FRIDAY","FRIG","FRIGHTEN","FURTHER","GAD","GEL","GEOLOGIST","GETTING","GLARE","GROVER","GRUE","GRUNT","GUISE","HARRY","HAW","HAWKS","HENDERSON","HEW","HID","HOLLOW","HORNET","HT","HUMP","HUT","ILLUMINATE","IRRIGATE","JACK","JERSEY","JULY","L","LAUGH ED","LB","LICK","LIEN","LISP","LOUR","LUCY","MARSHMALLOW","MASER","MATT","METE","MIKE","MINUET","MITE","MOMENTARILY","MONEYMAKER","MONTE","MORGAN","N","NEVADA","NICHE","NOSTRIL","NOVEMBER","OCCURRENCE","OCTOBER","OILY","OW","PASSE","PATIO","PI","POPULATE","PREFERRED","PRINCE","QUID","RAKE","RAM","RAVINE","REDDISH","RIPPED","RISEN","ROBERT","ROUNDEL","RUSSELL","SAN","SASQUATCH","SATURDAY","SCANNED","SEEING","SEPTEMBER","SHRED","SIERRAS","SILHOUETTE","SILL","SLAMMED","SNAPPING","SNOT","SNOWFALL","SNOWMAN","SOLDER","SOW","SPARSE","STALLION","STATES","STEIN","STOPPED","STRODE","STUD","TAKING","TALKIE","TERRIFY","THIGHS","THONG","THREW","THRU","TINT","TOAD","TOAST","TRIPPED","TWIG","UNDERFOOT","UPRIVER","VAMP","WALKIES","WAN","WASHINGTON","WEEKS","WHEELER","WILLIAM","WINDOWS","WITCH","WOULDN'T","YO","YOB"],"group":[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],"nodesize":[8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8]},"options":{"NodeID":"name","Group":"group","colourScale":"d3.scaleOrdinal(['#3182bd'])","fontSize":7,"fontFamily":"serif","clickTextSize":17.5,"linkDistance":50,"linkWidth":"'1.5px'.toString()","charge":-30,"opacity":0.6,"zoom":true,"legend":false,"arrows":false,"nodesize":true,"radiusCalculation":"d.nodesize","bounded":false,"opacityNoHover":1,"clickAction":null}},"evals":[],"jsHooks":[]}</script>
+<p>Although our network is relatively sparse, we notice more information from the reports. For instance, the link <span class="math inline">\(\text{MOMENTARILY} \Leftrightarrow \text{STOPPED} \Leftrightarrow \text{WHEELER} \Leftrightarrow \text{BROTH}\)</span> implies that Bigfoot is a connoisseur of soups. We also notice <span class="math inline">\(\text{FOOTHILL} \Leftrightarrow \text{SIERRAS} \Leftrightarrow \text{GEOLOGIST} \Leftrightarrow \text{PREFERRED} \Leftrightarrow \text{VAMP}\)</span>, which can only mean people assume that geologists in the Sierra Madre mountains are vampires (not enough data for further study)</p>
 <p>Beyond this, we need more sighting descriptions to give us a better network.</p>
 
 

@@ -41,6 +41,8 @@ As populations continue to expand into previously rural areas, we find ourselves
 
 The study includes various analysis, briefly described below (click links, or use navbar on top of page to read futher):
 
+(Warning: People with heart conditions should refrain from reading this analysis, as it will shock you to your very core)
+
 ### [Sub-Species Analysis](https://atrac2k.github.io/Portfolio/sub.html)
 
 An analysis of regional patterns of Bigfoot through unsupervised learning, and general characteristics of these sub-species

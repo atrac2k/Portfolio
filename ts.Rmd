@@ -68,12 +68,254 @@ temp <- dat[,c("Year","Species")]
 temp <- filter(temp,temp$Year != 2017)
 bigts <- temp %>% group_by(Species,Year)
 bigts <- bigts %>% count(Year)
+
+write.csv(bigts,"bigts.csv",row.names = F)
 ```
+
+In addition to the other research, we also need to look at the frequency of bigfoot sightings in the hope to predict future frequency. We begin by looking at sightings by species:
 
 ```{r, message=FALSE, warning=FALSE}
 library(ggplot2)
+bigts2 <- bigts[bigts$Year >= 1940,]
 
-qplot(Year, n, data = bigts, geom = "line", group = Species,color=Species,show.legend=F)+
+qplot(Year, n, data = bigts2, geom = "line", group = Species,color=Species,show.legend=F)+
     facet_grid(Species ~ ., scale = "free_y")+ 
-    geom_vline(xintercept=1967)
+    geom_vline(xintercept=2004)+
+  ggtitle("Bigfoot Sightings by Year and Species")+
+  ylab("Sightings")
 ```
+
+
+The first thing that stands out is the increase in sightings since the year 2000. Most species seem to have spikes in sightings around 2004 or 2005. This amateur researcher suspects that this spike in sightings was due to some sort of Bigfoot Olympics hosted by the United States. 
+
+Bigfoot tourists were likely spotted traveling from venue to venue, increasing sightings over the time.
+
+Though no humans have seen these events themselves, the likely sports were hairstyling, twig breaking, human scaring, and volleyball. 
+
+We press on and try to use auto-regressive modelling to predict future sightings frequency. We first turn to heirarchical time series methods to model total sightings, by instead modelling each sub species. This allows the model to pick up smaller changes in sub species sightings, which might be thrown out of the total model as random error.
+
+```{r, message=FALSE, warning=FALSE}
+library(hts)
+bigts3 <- data.frame(seq(1940,2016))
+colnames(bigts3) <- c("Year")
+
+for (i in 1:length(unique(bigts2$Species))){
+  temp <- bigts2[bigts2$Species == unique(bigts2$Species)[i],c(2,3)]
+  bigts3 <- left_join(bigts3,temp,by=c("Year"="Year"))
+}
+colnames(bigts3) <- c("Year",unique(bigts2$Species))
+
+sightings <- ts(bigts3[,2:8],start=1940,frequency=1)
+sightings <- hts(sightings)
+names(sightings$labels) <- c("Total", "Sub-Species")
+
+fork <- forecast(sightings,h=10)
+plot(fork)
+```
+
+For our first try, we notice that there's still too much variablility in our sub species sightings, and the prediction essentially mimics an exponential smoothing state space model. Instead, we choose to aritifucually smooth the data using smoothing splines, to allow the model to better pick up the trend. 
+
+```{r}
+smooth <- bigts3
+smooth[is.na(smooth)] <- 0
+for (i in 2:8){
+  smooth[,i] <- smooth.spline(smooth[,1],smooth[,i])$y
+}
+
+spline <- ts(smooth[,2:8],start=1940,frequency=1)
+spline <- hts(spline)
+names(spline$labels) <- c("Total", "Sub-Species")
+
+fork <- forecast(spline,h=10)
+fork$bts[fork$bts < 0 ] <- 0
+plot(fork)
+```
+
+In our smoothing spline model, we see a shocking trend. It seems that many of our Bigfoot sub species are dying out. We see these predictions in the following table:
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+fork$bts
+```
+
+It seems that Grandis Alekus and Skunk Ape are already extinct, while Mogollon, Sasquatch and Wendigo will all be extinct by 2021.It is only thanks to a strong increase in sightings from Momo that we can expect any sightings from this majestic creature. I also emplore the reader to contact their congressional representive and petition them to put Mogollon, Sasquatch and Wendigo onto the endangered species list before we lose these sexy, sexy creatures.
+
+You might find yourself asking, why are we losing Bigfoot at such high levels? Below we look at a few factors:
+
+```{r, message=FALSE, warning=FALSE}
+library(maps)
+library(leaflet)
+library(geojsonio)
+
+schools <- data.frame(c("Stanford","University of Chicago","Yale","Duke","Harvard","UVA","UPenn","Cornell","Northwestern","Columbia","Vanderbilt","UC Berkley","Michigan", "Texas","NYU","Boston College","Washington University","Georgetown","Georgia","Notre Dame"),c(38.4275,41.7896,41.3164,36.001,43.3774,38.0337,39.952,42.453,42.056,40.807,36.145,37.872,42.278,30.284,40.729580,42.335,38.649,38.909,33.9477,41.705),c(-122.1702,-87.599,-72.9225,-78.9385,-71.116,-78.5076,-75.1939,-76.474,-87.675,-73.96,-86.802,-122.259,-83.737,-97.734,-73.996,-71.168,-90.311,-77.074,-83.377,-86.235))
+colnames(schools) <- c("School","Lat","Long")
+states <- geojsonio::geojson_read("us-states.geojson", what = "sp")
+
+cities <- us.cities
+cities <- cities[cities$pop >= 100000,]
+cities <- filter(cities, !is.na(lat)& !is.na(long))
+
+bins <- c(0, 50, 100, 150, 200, 250, 300, 500, Inf)
+pal <- colorBin("YlOrRd", domain = states$Sightings, bins = bins)
+labels <- sprintf(
+  "<strong>%s</strong><br/>%g sightings",
+  states$name, states$Sightings
+) %>% lapply(htmltools::HTML)
+
+m <- leaflet(states) %>%
+  setView(-96, 37.8, 4) %>%
+  addProviderTiles("MapBox", options = providerTileOptions(
+    id = "mapbox.light",
+    accessToken = Sys.getenv('MAPBOX_ACCESS_TOKEN')))%>% addPolygons()%>% 
+  addPolygons(
+  fillColor = ~pal(Sightings),
+  weight = 2,
+  opacity = 1,
+  color = "white",
+  dashArray = "3",
+  fillOpacity = 0.7,
+  highlight = highlightOptions(
+    weight = 5,
+    color = "#666",
+    dashArray = "",
+    fillOpacity = 0.7,
+    bringToFront = TRUE),
+  label = labels,
+  labelOptions = labelOptions(
+    style = list("font-weight" = "normal", padding = "3px 8px"),
+    textsize = "15px",
+    direction = "auto"))%>% 
+  addLegend(pal = pal, values = ~Sightings, opacity = 0.7, title = NULL,
+  position = "bottomright") %>%
+  addCircles(data = dat,lng = ~longitude,lat=~latitude,weight = 3, radius=40,color="#ffa500", stroke = TRUE, fillOpacity = 0.8,group="Sighting Locations") %>% 
+  addMarkers(data = cities,lng=~long,lat=~lat,popup=~name,group="Major Cities") %>%
+  addCircles(data=schools,lng=~Long,lat=~Lat,radius=1000000,popup=~School,group = "Law Schools",opacity = .2) %>%
+  addLayersControl(
+    overlayGroups = c("Sighting Locations","Major Cities","Law Schools")) %>% 
+  hideGroup("Major Cities") %>%
+  hideGroup("Law Schools")
+
+m
+```
+
+In the map above, we look at a chloroplath map of each state, with some of the causes of Bigfoot sightings. When adding major cities to the plot, we notice how most sightings occur relatively close to larger cities (more on this topic lower in this page). We also take note that when we plot top 20 law schools with relative spheres of influence (which were found in a very scientific way, not by just plotting random radius sizes until it looked alright), we can infer that the lizard people who control the government are obviously trying to suppress the truth.
+
+We now look at the possible encrouchment of humans on Bigfoot habitat. To do so, we measure the Mahalanobis distance of each sighting to the closest major city. We choose Mahalanobis distance ($(x-y)^T \Sigma^{-1}(x-y)$) over Euclidian distance ($||(x-y)||_2^2$) as it corrects for differences in variance between latitude and longitude
+
+```{r, eval=FALSE, include=TRUE}
+popdist <- dat[,c(6,7,29)]
+popdist[,"City"] <- 100
+colnames(cities)[4] <- "latitude"
+colnames(cities)[5] <- "longitude"
+
+popdist2 <- data.frame(NULL)
+for (i in 1:length(unique(popdist$Species))){
+  temp <- popdist[popdist$Species == unique(popdist$Species)[i],]
+  cov <- cov(rbind(temp[,c(1,2)],cities[,c(4,5)]))
+  for (j in 1:nrow(temp)){
+    for (k in 1:nrow(cities)){
+      dist <- mahalanobis(c(temp[j,1],temp[j,2]),c(cities[k,4],cities[k,5]),cov)
+      if (dist < temp[j,"City"]){
+        temp[j,"City"] <- dist
+      }
+    }
+  }
+  popdist2 <- rbind(popdist2,temp)
+}
+
+popdist2$City <- popdist2$City * 69
+```
+
+Now that we have the distance to the closest city (in approximate miles) we check the results:
+
+```{r setup, include = FALSE}
+library(knitr)
+library(reticulate)
+knitr::knit_engines$set(python = reticulate::eng_python)
+```
+```{python,eval=FALSE,include=TRUE}
+from bokeh.plotting import figure
+from bokeh.models import ColumnDataSource, HoverTool
+from bokeh.resources import CDN
+from bokeh.palettes import Category20
+import pandas as pd
+import numpy as np
+from bokeh.embed import file_html
+#
+data = pd.read_csv("C:/Users/ATrac/OneDrive/Documents/Web/Portfolio/popdist2.csv")
+data_small = data.loc[data['City'] <= 50]
+#
+def data_trans(species, range_start = 0, range_end = 50, bin_width = 1):
+    by_species = pd.DataFrame(columns = ['proportion','left','right',                                         'f_proportion','f_interval','species','color'])
+    range_extent = range_end - range_start
+    #
+    for i, species_name in enumerate(species):
+        #
+        subset = data_small[data_small['Species'] == species_name]
+        #
+        arr_hist, edges = np.histogram(subset['City'],
+          bins = int(range_extent/bin_width),
+          range = [range_start,range_end])
+        #
+        arr_df = pd.DataFrame({'proportion':arr_hist/np.sum(arr_hist),'left':edges[:-1],'right':edges[1:]})
+        #
+        arr_df['f_interval'] = ['%d to %d miles' % (left,right) for left, 
+              right in zip(arr_df['left'],arr_df['right'])]
+        
+        arr_df['name'] = species_name
+        #
+        arr_df['color'] = Category20[16][i]
+        #
+        by_species = by_species.append(arr_df)
+        #
+    by_species = by_species.sort_values(['name','left'])
+    #
+    return ColumnDataSource(by_species)
+
+def make_plot(src):
+    #
+    p = figure(plot_width = 700, plot_height = 700,
+           title= 'Bigfoot Sighting Distance to Closest Major City',
+           x_axis_label = 'Distance to Major City (Miles)',
+           y_axis_label = 'Frequency')
+    
+    p.quad(source=src,bottom=0,top='proportion',left='left',right='right',
+           color='color',fill_alpha=0.7,hover_fill_color = 'color',legend='name',
+           hover_fill_alpha = 1, line_color='black')
+    #
+    hover = HoverTool(tooltips = [('Species','@name'),
+                                  ('Miles','@f_interval'),
+                                  ('Proportion','@f_proportion')],
+                    mode = 'vline')
+    
+    p.add_tools(hover)
+    #
+    return(p)
+    #
+    #
+html = file_html(make_plot(data_trans(data_small['Species'].unique())), CDN, "Bokeh plot")
+Html_file= open("Bokeh plot.html","w")
+Html_file.write(html)
+Html_file.close()
+```
+
+<iframe src="C:/Users/ATrac/OneDrive/Documents/Web/Portfolio/Bokeh Plot.html"
+    style="max-width = 100%"
+    sandbox="allow-same-origin allow-scripts"
+    width="100%"
+    height="800"
+    scrolling="no"
+    seamless="seamless"
+    frameborder="0">
+</iframe>
+
+As we quickly notice in the plot, most sightings occur within 5 miles of a major city. We also take note of how many Skunk Ape sightings occur within a mile of a major city. From our previous analysis, we showed how Skunk Ape is already likely to be extinct, and we can now identify the cause. 
+
+Take note of the increase in Bigfoot sightings from the 1950's and 60's (figure at the top of this page), we notice this coincides with "white flight" (the migration of middle class families out of urban areas, and the major expansion of suburban areas). This geographic expansion of cities has encroached on Bigfoot habitat, increasing sightings as Bigfoot struggles to adapt to its shrinking range. 
+
+As beings of this earth, we need to learn how to live with our shy neighbors. Instead of doing something rash, like learning to coexist with the environment, we need to show Bigfoot the wonders of industrialization.
+
+We can start by providing rent controlled housing for the Bigfeet (the twigs to U.S dollars exchange is poor). A possible rendering of such housing is below:
+```{r}
+knitr::include_graphics('./housing.jpg')
+```
+
+Our next step would be to build ice cube factories. These factories have a dual purpose. Not only does it provide these new members of society proper employment, but we can also use the surplus of ice cubes to help counteract global warming. 

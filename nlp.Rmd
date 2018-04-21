@@ -8,6 +8,9 @@ Included in our dataset, we are lucky enough to have the full description of eac
 library(readxl)
 library(httr)
 library(dplyr)
+library(hunspell)
+
+dat <- read.csv("C:/Users/ATrac/OneDrive/Documents/Web/atraczyk.github.io/bfro_reports_geocoded.csv")
 
 charfreq <- data.frame(NULL)
 charfreq[1,1] <- NA
@@ -31,35 +34,58 @@ common$most <- toupper(common$most)
 
 for (i in 1:nrow(dat)){
   temp <- strsplit(toupper(as.character(dat[i,1]))," ")
+  if (length(temp[[1]])>0){
   temp <- data.frame(temp)
-  temp[,1] <- gsub("[(),.!?`\'\"#-]", "", temp[,1])
+  temp[,1] <- gsub("[(),.!?`\'\"#-;]", "", temp[,1])
+  temp[,1] <- gsub("[[:punct:]]", "",temp[,1]) 
+  temp[,1] <- str_replace_all(temp[,1], "[^[:alnum:]]", "")
+  temp <- filter(temp,!is.na(temp[,1]))
+  temp <- filter(temp,temp[,1] != "")
   colnames(temp) <- c("word")
   temp <- anti_join(temp,common,by=c("word" = "most"))
+  temp <- filter(temp, word != "WAS" & word != "HAD" & word != "WERE" & word != "IS" & word != "BEEN" & word != "AN" & word != "WENT" & word != "GOT" &
+                       word != "DID" & word != "DIDNT" & word != "ARE" & word != "DONT" & word != "WASNT" & word != "HAS" & word != "&" & word != "IM" &
+                       word != "IVE" & word != "ARENT" & word != "THINGS" & word != "COUNLDNT" & !grepl("*HTTPS*",temp$word))
+  if (nrow(temp) > 0){
+  for( j in 1:nrow(temp)){
+    if (length(hunspell(temp[i,1]))[[1]]>0){
+      temp[j,1] <- hunspell_suggest(temp[j,1])[[1]][1]
+    }
+    if (length(hunspell_stem(temp[j,1])[[1]]) > 0){
+      temp[j,1] <- hunspell_stem(temp[j,1])[[1]][length(hunspell_stem(temp[j,1])[[1]])]
+    }
+  }
+  temp[,1] <- toupper(temp[,1])
+  colnames(temp) <- c("word")
+  temp <- anti_join(temp,common,by=c("word" = "most"))
+  temp <- filter(temp, word != "WAS" & word != "HAD" & word != "WERE" & word != "IS" & word != "BEEN" & word != "AN" & word != "WENT" & word != "GOT" &
+                       word != "DID" & word != "DIDNT" & word != "ARE" & word != "DONT" & word != "WASNT" & word != "HAS" & word != "&" & word != "IM" &
+                       word != "IVE" & word != "ARENT" & word != "THINGS" & word != "COUNLDNT" & !grepl("*HTTPS*",temp$word))
   
   if (nrow(temp) > 1){
     connfdf <- data.frame(NULL)
     connfdf[1,1] <- NA
     connfdf[1,2] <- NA
     conntemp <- data.frame(as.character(temp[,1]))
-      for (l in 1:(nrow(conntemp)-1)){
-        temp2 <- c(as.character(conntemp[l,1]),as.character(conntemp[l+1,1]))
-        temp2 <- as.data.frame(t(temp2))
-        connfdf <- bind_rows(connfdf,temp2)
-      }
+    for (l in 1:(nrow(conntemp)-1)){
+      temp2 <- c(as.character(conntemp[l,1]),as.character(conntemp[l+1,1]))
+      temp2 <- as.data.frame(t(temp2))
+      connfdf <- bind_rows(connfdf,temp2)
+    }
     connfdf <- connfdf[-1,]
     conndf <- connfdf %>% group_by(connfdf[,1],connfdf[,2]) %>% summarise(n=n())
     
-  for (k in 1:nrow(conndf)){
-    if ((!conndf[k,1] %in% connections[,1]) & (!conndf[k,2] %in% connections[,2])){
-      connections[nrow(connections)+1,1] <- conndf[k,1]
-      connections[nrow(connections),2] <- conndf[k,2]
-      connections[nrow(connections),3] <- conndf[k,3]
-    }
-    else {
-      index <- which((connections[,1] %in% conndf[k,1]) & (connections[,2] %in% conndf[k,2]))
-      connections[index,3] <- connections[index,3] + conndf[k,3]
+    for (k in 1:nrow(conndf)){
+      if ((!conndf[k,1] %in% connections[,1]) & (!conndf[k,2] %in% connections[,2])){
+        connections[nrow(connections)+1,1] <- conndf[k,1]
+        connections[nrow(connections),2] <- conndf[k,2]
+        connections[nrow(connections),3] <- conndf[k,3]
       }
-  }}
+      else {
+        index <- which((connections[,1] %in% conndf[k,1]) & (connections[,2] %in% conndf[k,2]))
+        connections[index,3] <- connections[index,3] + conndf[k,3]
+      }
+    }}
   
   temp <- temp %>% group_by(temp[,1]) %>% summarise(n = n())
   temp <- filter(temp,temp[,1] != "")
@@ -75,21 +101,18 @@ for (i in 1:nrow(dat)){
       }
     }
   }
-
+  }
+  }
 }
 
 
 ```
 ```{r, message=FALSE, warning=FALSE, include=FALSE}
-library(readxl)
-library(httr)
 library(dplyr)
-charfreq <- read.csv("C:/Users/ATrac/OneDrive/Documents/charfreq.csv")
+charfreq <- read.csv("C:/Users/ATrac/OneDrive/Documents/Web/Portfolio/charfreq.csv")
 charfreq <- charfreq[,-1]
-charfreq <- filter(charfreq, V1 != "WAS" & V1 != "HAD" & V1 != "WERE" & V1 != "IS" & V1 != "BEEN" & V1 != "AN" & V1 != "WENT" & V1 != "GOT" &
-                     V1 != "DID" & V1 != "DIDNT" & V1 != "ARE" & V1 != "DONT" & V1 != "WASNT" & V1 != "HAS")
 colnames(charfreq) <- c("Word","Frequency")
-connections <- read.csv("C:/Users/ATrac/OneDrive/Documents/connections.csv")
+connections <- read.csv("C:/Users/ATrac/OneDrive/Documents/Web/Portfolio/connections.csv")
 connections <- connections[,-1]
 connections <- filter(connections, connections$V1 != "" & connections$V2 != "")
 colnames(connections) <- c("First Word","Second Word","Frequency")
@@ -101,13 +124,6 @@ top <- data.frame(head(charfreq[order(charfreq$Frequency,decreasing=T),],20))
 rownames(top) <- c(1:20)
 top
 ```
-
-From just the top 10 words we can start to make some general characterizations about sightings:
-
-  * Since the most common word was "HEARD" we can assume that in most sightings, survivors could hear the big create trudging through the brush (therefore, we can also assume that deaf people have a much lower probability of bigfoot encounters). 
-  * We also notice that number 9 ("BIGFOOT") tells us that most survivors are smart enough to know the truth.
-  * As number 3 ("WOODS") and number 18 ("TREES") both have to do with forested areas, we solidify the theory that Bigfoot is a woodland creature.
-  * Somewhat shockingly, people have to mention their foot fetishes so much that it's number 5 on the word frequency list.
   
 For a faster glance at the data, we check the following word cloud:
 ```{r}
@@ -116,7 +132,11 @@ cloud <- filter(charfreq,Frequency > 780)
 wordcloud(cloud$Word,cloud$Frequency,color="brown")
 ```
 
-Our wordcloud seems to follow the general patterns of common Bigfoot encounters. The experience is very vocal (SOUNDS,HEARD,SOUNDED), and typically involved seeing the beautiful creature (SAW,LOOKED,LOOKING,SEEN,NOTICED,SIGHTING). Again, typically these encounters seem to be in the forest (TREES,WOODS, CREEK[?]). Lastly, our survivors also seem to be very shallow, focusing on Bigfoots looks ([strong] ARMS, [long] LEGS, [I'm getting lost in Bigfoots] EYES).
+From just the top 20 words, and the wordcloud we can start to make some general characterizations about sightings:
+
+  * After `hunspell`'s spell check, and root word finder, the people who have Bigfoot sightings end up being very aristocratic. Most survivors seem to be nobility (DAIS [#2], a throne), and are oddly worried about missing their stately balls (MINUET [#11]). Most sightings seem to occur to well stocked hunting parties (TUN [#7] a cask of wine, LIME [#6] for gin and tonics), trying to catch HARE's [#1] and roadrunners (ACME [#4]) for dinner.
+  * The survivors also seem to be relatively sexist (DAME [#8], and STUD [#13]), and are always ready to impress the opposite sex with their GEL[led] hair [#17]
+  * We take note that since BIGFOOT [#3] is so high on the list, these survivors know the truth.
 
 Similarly, we check the most common bigrams:
 ```{r}
@@ -127,29 +147,17 @@ top
 
 Again, we notice intersting things right away:
 
-  * Survivors seem to frequently agree that the animal is around 8 feet tall. From number 13 ("WHOOP WHOOP"), we get a general idea of what a Bigfoot call sounds like, and that most encounters happen at 30 yeards (number 3). Since "ARMS SWINGING" is also such a commonly used bigram, we discover that Bigfoots favorite dance is the Charleston
-  * We also take note that survivors seem to usually be prepared for their excursions by bringing sleeping bags (number 8), bring flashlights (number 15), and somehow found tents with locking doors (number 11).
+  * Most survivors were smart enough to HIDe their GEL [#2], because they smartly knew they didn't have enough to share with Bigfoot.
+  * Surprisingly, no one seems to relate Bigfoot to Chewbaca, but instead, to the more realistic HARRY and the HENDERSONs [#9].
+  * The survivors also seem to have sort sort of obsesive compulsive disorder, repeating words (NICHE NICHE [#1], l l [#3], HOLLOW HOLLOW [#18]).
   
 We can also create a network diagram from these bigrams:
-```{r, message=FALSE, warning=FALSE, include=FALSE}
-charfreq <- read.csv("C:/Users/ATrac/OneDrive/Documents/charfreq.csv")
-charfreq <- charfreq[,-1]
-colnames(charfreq) <- c("Word","Size")
-connections <- read.csv("C:/Users/ATrac/OneDrive/Documents/connections.csv")
-connections <- connections[,-1]
-connections <- filter(connections, connections$V1 != "" & connections$V2 != "")
-colnames(connections) <- c("First Word","Second Word","Frequency")
-connections[,1] <- gsub("[[:punct:]]", "",connections[,1]) 
-connections[,2] <- gsub("[[:punct:]]", "",connections[,2]) 
-connections <- filter(connections, connections[,1] != "" & connections[,2] != "")
-```
 ```{r}
 library(networkD3)
-connections <- filter(connections,Frequency > 2)
+connections <- filter(connections,Frequency > 3)
 simpleNetwork(connections,zoom = T)
-
 ```
 
-Although our network is relatively sparse, we notice more information from the reports. For instance, the link $\text{BINOCULARS} \Leftrightarrow \text{SAW} \Leftrightarrow \text{SMELLED}$ implies that there's some lucky people out there who have smelling binoculars. We also find $\text{BEARS} \Leftrightarrow \text{DONT} \Leftrightarrow \text{HIND}$, which should likely read "bear don't stand on hind legs". This tells us that most survivors aren't too familiar with bears. 
+Although our network is relatively sparse, we notice more information from the reports. For instance, the link $\text{MOMENTARILY} \Leftrightarrow \text{STOPPED} \Leftrightarrow \text{WHEELER} \Leftrightarrow \text{BROTH}$ implies that Bigfoot is a connoisseur of soups. We also notice $\text{FOOTHILL} \Leftrightarrow \text{SIERRAS} \Leftrightarrow \text{GEOLOGIST} \Leftrightarrow \text{PREFERRED} \Leftrightarrow \text{VAMP}$, which can only mean people assume that geologists in the Sierra Madre mountains are vampires (not enough data for further study)
 
 Beyond this, we need more sighting descriptions to give us a better network.

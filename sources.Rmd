@@ -8,11 +8,15 @@ title: "sources"
  
  (I used the file "bfro_reports_geocoded.csv")
  
+ Common Words: http://www.rupert.id.au/resources/4000-most-common-english-words-xlsx.xlsx
+ 
 ## Images:
 
   Bigfoot Image: http://images.gawker.com/195g0l3khm7z0png/c_fit,fl_progressive,q_80,w_636.png
   
   Al Borland Image: https://decider.com/2017/10/20/home-improvements-al-borland-needs-to-be-a-gay-icon/
+  
+  Housing Image : http://www.absolutely-unbelievable.com/?p=1578
   
 ## Shout outs:
 
