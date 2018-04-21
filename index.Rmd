@@ -1,5 +1,5 @@
 ---
-title: "Bigfoot: Fact or Non-Fiction"
+title: 'Bigfoot: Fact or Non-Fiction'
 ---
 
 
@@ -39,7 +39,7 @@ p
 
 As populations continue to expand into previously rural areas, we find ourselves face to face with what lives in the deep of the woods. In this project, for the first time, we apply machine learning and super-duper advanced visualization techniques to finally answer the question: Bigfoot, fact or non-fiction.
 
-The study includes various analysis, briefly described below (click links, or use navbar on top of page to read futher):
+The study includes various analysis, briefly described below (click links, or use the navbar on top of page to read further):
 
 (Warning: People with heart conditions should refrain from reading this analysis, as it will shock you to your very core)
 
@@ -49,7 +49,7 @@ An analysis of regional patterns of Bigfoot through unsupervised learning, and g
 
 ### [Natural Language Processing](https://atrac2k.github.io/Portfolio/nlp.html)
 
-We explore frequencies of unigrams and bigrams in Bigfoot survivors descriptions of the evens, and find similarities in the encounters.
+We explore frequencies of uni-grams and bi-grams in Bigfoot survivors descriptions of the evens, and find similarities in the encounters.
 
 ### [Frequency Analysis](https://atrac2k.github.io/Portfolio/ts.html)
 

@@ -72,7 +72,7 @@ bigts <- bigts %>% count(Year)
 write.csv(bigts,"bigts.csv",row.names = F)
 ```
 
-In addition to the other research, we also need to look at the frequency of bigfoot sightings in the hope to predict future frequency. We begin by looking at sightings by species:
+In addition to the other research, we also need to look at the frequency of Bigfoot sightings in the hope to predict future frequency. We begin by looking at sightings by species:
 
 ```{r, message=FALSE, warning=FALSE}
 library(ggplot2)
@@ -90,9 +90,9 @@ The first thing that stands out is the increase in sightings since the year 2000
 
 Bigfoot tourists were likely spotted traveling from venue to venue, increasing sightings over the time.
 
-Though no humans have seen these events themselves, the likely sports were hairstyling, twig breaking, human scaring, and volleyball. 
+Though no humans have seen these events themselves, the likely sports were hair styling, twig breaking, human scaring, and volleyball. 
 
-We press on and try to use auto-regressive modelling to predict future sightings frequency. We first turn to heirarchical time series methods to model total sightings, by instead modelling each sub species. This allows the model to pick up smaller changes in sub species sightings, which might be thrown out of the total model as random error.
+We press on and try to use auto-regressive modelling to predict future sightings frequency. We first turn to hierarchical time series methods to model total sightings, by instead modelling each sub species. This allows the model to pick up smaller changes in sub species sightings, which might be thrown out of the total model as random error.
 
 ```{r, message=FALSE, warning=FALSE}
 library(hts)
@@ -113,7 +113,7 @@ fork <- forecast(sightings,h=10)
 plot(fork)
 ```
 
-For our first try, we notice that there's still too much variablility in our sub species sightings, and the prediction essentially mimics an exponential smoothing state space model. Instead, we choose to aritifucually smooth the data using smoothing splines, to allow the model to better pick up the trend. 
+For our first try, we notice that there's still too much variability in our sub species sightings, and the prediction essentially mimics an exponential smoothing state space model. Instead, we choose to artificially smooth the data using smoothing splines, to allow the model to better pick up the trend. 
 
 ```{r}
 smooth <- bigts3
@@ -136,7 +136,7 @@ In our smoothing spline model, we see a shocking trend. It seems that many of ou
 fork$bts
 ```
 
-It seems that Grandis Alekus and Skunk Ape are already extinct, while Mogollon, Sasquatch and Wendigo will all be extinct by 2021.It is only thanks to a strong increase in sightings from Momo that we can expect any sightings from this majestic creature. I also emplore the reader to contact their congressional representive and petition them to put Mogollon, Sasquatch and Wendigo onto the endangered species list before we lose these sexy, sexy creatures.
+It seems that Grandis Alekus and Skunk Ape are already extinct, while Mogollon, Sasquatch and Wendigo will all be extinct by 2021.It is only thanks to a strong increase in sightings from Momo that we can expect any sightings from this majestic creature. I also implore the reader to contact their congressional representative and petition them to put Mogollon, Sasquatch and Wendigo onto the endangered species list before we lose these sexy, sexy creatures.
 
 You might find yourself asking, why are we losing Bigfoot at such high levels? Below we look at a few factors:
 
@@ -196,9 +196,9 @@ m <- leaflet(states) %>%
 m
 ```
 
-In the map above, we look at a chloroplath map of each state, with some of the causes of Bigfoot sightings. When adding major cities to the plot, we notice how most sightings occur relatively close to larger cities (more on this topic lower in this page). We also take note that when we plot top 20 law schools with relative spheres of influence (which were found in a very scientific way, not by just plotting random radius sizes until it looked alright), we can infer that the lizard people who control the government are obviously trying to suppress the truth.
+In the map above, we look at a chloroplast map of each state, with some of the causes of Bigfoot sightings. When adding major cities to the plot, we notice how most sightings occur relatively close to larger cities (more on this topic lower in this page). We also take note that when we plot top 20 law schools with relative spheres of influence (which were found in a very scientific way, not by just plotting random radius sizes until it looked alright), we can infer that the lizard people who control the government are obviously trying to suppress the truth.
 
-We now look at the possible encrouchment of humans on Bigfoot habitat. To do so, we measure the Mahalanobis distance of each sighting to the closest major city. We choose Mahalanobis distance ($(x-y)^T \Sigma^{-1}(x-y)$) over Euclidian distance ($||(x-y)||_2^2$) as it corrects for differences in variance between latitude and longitude
+We now look at the possible encroachment of humans on Bigfoot habitat. To do so, we measure the Mahalanobis distance of each sighting to the closest major city. We choose Mahalanobis distance ($(x-y)^T \Sigma^{-1}(x-y)$) over Euclidean distance ($||(x-y)||_2^2$) as it corrects for differences in variance between latitude and longitude
 
 ```{r, eval=FALSE, include=TRUE}
 popdist <- dat[,c(6,7,29)]
@@ -314,6 +314,7 @@ Take note of the increase in Bigfoot sightings from the 1950's and 60's (figure 
 As beings of this earth, we need to learn how to live with our shy neighbors. Instead of doing something rash, like learning to coexist with the environment, we need to show Bigfoot the wonders of industrialization.
 
 We can start by providing rent controlled housing for the Bigfeet (the twigs to U.S dollars exchange is poor). A possible rendering of such housing is below:
+
 ```{r, echo=FALSE}
 knitr::include_graphics('./housing.jpg')
 ```

@@ -2,7 +2,7 @@
 title: "Natural Language Process"
 ---
 
-Included in our dataset, we are lucky enough to have the full description of each Bigfoot encounter. Through Natural Language Process, we can study the commonalities between sightings. In the following code, we split each description, remove the 3,000 most common words, and keep a running total of each word. Additionally, we find the frequency of bigrams. 
+Included in our data set, we are lucky enough to have the full description of each Bigfoot encounter. Through Natural Language Process, we can study the commonalities between sightings. In the following code, we split each description, remove the 3,000 most common words, and keep a running total of each word. Additionally, we find the frequency of bi-grams. 
 
 ```{r, message=FALSE, warning=FALSE, include=TRUE,eval=FALSE}
 library(readxl)
@@ -132,26 +132,26 @@ cloud <- filter(charfreq,Frequency > 780)
 wordcloud(cloud$Word,cloud$Frequency,color="brown")
 ```
 
-From just the top 20 words, and the wordcloud we can start to make some general characterizations about sightings:
+From just the top 20 words, and the word-cloud we can start to make some general characterizations about sightings:
 
   * After `hunspell`'s spell check, and root word finder, the people who have Bigfoot sightings end up being very aristocratic. Most survivors seem to be nobility (DAIS [#2], a throne), and are oddly worried about missing their stately balls (MINUET [#11]). Most sightings seem to occur to well stocked hunting parties (TUN [#7] a cask of wine, LIME [#6] for gin and tonics), trying to catch HARE's [#1] and roadrunners (ACME [#4]) for dinner.
   * The survivors also seem to be relatively sexist (DAME [#8], and STUD [#13]), and are always ready to impress the opposite sex with their GEL[led] hair [#17]
   * We take note that since BIGFOOT [#3] is so high on the list, these survivors know the truth.
 
-Similarly, we check the most common bigrams:
+Similarly, we check the most common bi-grams:
 ```{r}
 top <- data.frame(head(connections[order(connections$Frequency,decreasing=T),],20))
 rownames(top) <- c(1:20)
 top
 ```
 
-Again, we notice intersting things right away:
+Again, we notice interesting things right away:
 
   * Most survivors were smart enough to HIDe their GEL [#2], because they smartly knew they didn't have enough to share with Bigfoot.
-  * Surprisingly, no one seems to relate Bigfoot to Chewbaca, but instead, to the more realistic HARRY and the HENDERSONs [#9].
-  * The survivors also seem to have sort sort of obsesive compulsive disorder, repeating words (NICHE NICHE [#1], l l [#3], HOLLOW HOLLOW [#18]).
+  * Surprisingly, no one seems to relate Bigfoot to Chewbacca, but instead, to the more realistic HARRY and the HENDERSONs [#9].
+  * The survivors also seem to have sort sort of obsessive compulsive disorder, repeating words (NICHE NICHE [#1], l l [#3], HOLLOW HOLLOW [#18]).
   
-We can also create a network diagram from these bigrams:
+We can also create a network diagram from these bi-grams:
 ```{r}
 library(networkD3)
 connections <- filter(connections,Frequency > 3)
