@@ -92,6 +92,8 @@ Bigfoot tourists were likely spotted traveling from venue to venue, increasing s
 
 Though no humans have seen these events themselves, the likely sports were hair styling, twig breaking, human scaring, and volleyball. 
 
+### Time Series Analysis:
+
 We press on and try to use auto-regressive modelling to predict future sightings frequency. We first turn to hierarchical time series methods to model total sightings, by instead modelling each sub species. This allows the model to pick up smaller changes in sub species sightings, which might be thrown out of the total model as random error.
 
 ```{r, message=FALSE, warning=FALSE}
@@ -107,7 +109,7 @@ colnames(bigts3) <- c("Year",unique(bigts2$Species))
 
 sightings <- ts(bigts3[,2:8],start=1940,frequency=1)
 sightings <- hts(sightings)
-names(sightings$labels) <- c("Total", "Sub-Species")
+names(sightings$labels) <- c(paste("Bigfoot Sightings Forecast by Year","Total",sep="\n\n"), "Sub-Species")
 
 fork <- forecast(sightings,h=10)
 plot(fork)
@@ -124,7 +126,7 @@ for (i in 2:8){
 
 spline <- ts(smooth[,2:8],start=1940,frequency=1)
 spline <- hts(spline)
-names(spline$labels) <- c("Total", "Sub-Species")
+names(spline$labels) <- c(paste("Bigfoot Smoothed Sightings Forecast by Year","Total",sep="\n\n"), "Sub-Species")
 
 fork <- forecast(spline,h=10)
 fork$bts[fork$bts < 0 ] <- 0
@@ -137,6 +139,8 @@ fork$bts
 ```
 
 It seems that Grandis Alekus and Skunk Ape are already extinct, while Mogollon, Sasquatch and Wendigo will all be extinct by 2021.It is only thanks to a strong increase in sightings from Momo that we can expect any sightings from this majestic creature. I also implore the reader to contact their congressional representative and petition them to put Mogollon, Sasquatch and Wendigo onto the endangered species list before we lose these sexy, sexy creatures.
+
+### Exploring Causes of Decline:
 
 You might find yourself asking, why are we losing Bigfoot at such high levels? Below we look at a few factors:
 
@@ -183,8 +187,9 @@ m <- leaflet(states) %>%
     style = list("font-weight" = "normal", padding = "3px 8px"),
     textsize = "15px",
     direction = "auto"))%>% 
-  addLegend(pal = pal, values = ~Sightings, opacity = 0.7, title = NULL,
-  position = "bottomright") %>%
+  addLegend(pal = pal, values = ~Sightings, opacity = 0.7, 
+  position = "bottomright",
+  title="Bigfoot Sightings by State") %>%
   addCircles(data = dat,lng = ~longitude,lat=~latitude,weight = 3, radius=40,color="#ffa500", stroke = TRUE, fillOpacity = 0.8,group="Sighting Locations") %>% 
   addMarkers(data = cities,lng=~long,lat=~lat,popup=~name,group="Major Cities") %>%
   addCircles(data=schools,lng=~Long,lat=~Lat,radius=1000000,popup=~School,group = "Law Schools",opacity = .2) %>%
@@ -310,6 +315,8 @@ Html_file.close()
 As we quickly notice in the plot, most sightings occur within 5 miles of a major city. We also take note of how many Skunk Ape sightings occur within a mile of a major city. From our previous analysis, we showed how Skunk Ape is already likely to be extinct, and we can now identify the cause. 
 
 Take note of the increase in Bigfoot sightings from the 1950's and 60's (figure at the top of this page), we notice this coincides with "white flight" (the migration of middle class families out of urban areas, and the major expansion of suburban areas). This geographic expansion of cities has encroached on Bigfoot habitat, increasing sightings as Bigfoot struggles to adapt to its shrinking range. 
+
+### Solutions:
 
 As beings of this earth, we need to learn how to live with our shy neighbors. Instead of doing something rash, like learning to coexist with the environment, we need to show Bigfoot the wonders of industrialization.
 

@@ -118,15 +118,17 @@ connections <- filter(connections, connections$V1 != "" & connections$V2 != "")
 colnames(connections) <- c("First Word","Second Word","Frequency")
 ```
 
+### Uni-Grams:
+
 We first take a look at the 20 most common words:
-```{r}
+```{r, echo=FALSE}
 top <- data.frame(head(charfreq[order(charfreq$Frequency,decreasing=T),],20))
 rownames(top) <- c(1:20)
 top
 ```
   
 For a faster glance at the data, we check the following word cloud:
-```{r}
+```{r, message=FALSE, warning=FALSE}
 library(wordcloud)
 cloud <- filter(charfreq,Frequency > 780)
 wordcloud(cloud$Word,cloud$Frequency,color="brown")
@@ -138,8 +140,10 @@ From just the top 20 words, and the word-cloud we can start to make some general
   * The survivors also seem to be relatively sexist (DAME [#8], and STUD [#13]), and are always ready to impress the opposite sex with their GEL[led] hair [#17]
   * We take note that since BIGFOOT [#3] is so high on the list, these survivors know the truth.
 
+### Bi-Grams:
+
 Similarly, we check the most common bi-grams:
-```{r}
+```{r, echo=FALSE}
 top <- data.frame(head(connections[order(connections$Frequency,decreasing=T),],20))
 rownames(top) <- c(1:20)
 top
@@ -152,7 +156,7 @@ Again, we notice interesting things right away:
   * The survivors also seem to have sort sort of obsessive compulsive disorder, repeating words (NICHE NICHE [#1], l l [#3], HOLLOW HOLLOW [#18]).
   
 We can also create a network diagram from these bi-grams:
-```{r}
+```{r, message=FALSE, warning=FALSE}
 library(networkD3)
 connections <- filter(connections,Frequency > 3)
 simpleNetwork(connections,zoom = T)
