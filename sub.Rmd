@@ -75,6 +75,7 @@ dat <- read.csv("C:/Users/ATrac/OneDrive/Documents/Web/atraczyk.github.io/bfro_r
 dat <- dat[!is.na(dat$latitude)&!is.na(dat$longitude),]
 ```
 ```{r, message=FALSE, warning=FALSE}
+#Run EM model with 7 classes
 set.seed(0)
 test <- simple.init(dat[,c("latitude","longitude")],nclass=7)
 test <- shortemcluster(dat[,c("latitude","longitude")],test)
@@ -114,6 +115,7 @@ for (i in 1:nrow(emclass)){
 library(dplyr)
 library(plotly)
 
+#Plot EM results
 g <- list(
   scope = 'usa',
   projection = list(type = 'albers usa'),
@@ -184,6 +186,7 @@ for (i in 1:nrow(dat)){
 dat[,"Month"] <- month(as.Date(dat$date,"%Y-%m-%d"))
 ```
 ```{r}
+#Plot monthly Sightings by species
 qplot(Month,data=dat,facets=Species~.,geom="histogram",fill=Species,binwidth=1,main="Sightings By Month")+
   scale_x_continuous(name="Month", breaks=c(1:12),labels=c("Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"))
 ```
@@ -193,6 +196,7 @@ qplot(Month,data=dat,facets=Species~.,geom="histogram",fill=Species,binwidth=1,m
 We take note from the above plot of sightings by month, that in most sub-species of Bigfoot sightings drop during the winter months (notable exceptions include Grandis Alekus, Grassman, Mogollon). It is my hypothesis that most Bigfoot sub-species hibernate during winter, and thus sightings drop off (of course it isn't because less people are outside during the winter. Don't be preposterous). We test this hypothesis by instead plotting by the low temperature during each sighting:
 
 ```{r, message=FALSE, warning=FALSE}
+#Plot sightings by temperature and species
 qplot(round(temperature_low,0),data=dat,facets=Species~.,geom="histogram",fill=Species,binwidth=2,main="Sightings By Low Temperature")+
   scale_x_continuous(name="Low Temperature") + geom_vline(xintercept=32)
 ```
@@ -208,6 +212,7 @@ Many studies also assume Bigfoot has a similar diet to bears. Although little is
 Since we have geocoded data for reported sightings, we can also test the average position of sightings by month. As we proved that Bigfoot hibernates over winter, we can expect Bigfoot to not show any major migratory patterns.
 
 ```{r}
+#Find average location of each species by month
 species <- c("Mogollon","Grassman","Momo","Wendigo","Skunk Ape","Sasquatch","Grandis Alekus")
 dat[,"Month"] <- as.numeric(substr(dat$date,6,7))
 
@@ -232,6 +237,7 @@ for (i in 1:nrow(migration)){
 colnames(migration) <- c("Species","Month","Lat","Long")
 ```
 ```{r, message=FALSE, warning=FALSE}
+#Plot average monthly location
 library(leaflet)
 
 leaflet() %>%

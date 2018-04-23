@@ -10,8 +10,10 @@ library(httr)
 library(dplyr)
 library(hunspell)
 
-dat <- read.csv("C:/Users/ATrac/OneDrive/Documents/Web/atraczyk.github.io/bfro_reports_geocoded.csv")
+#Grab data
+dat <- read.csv("bfro_reports_geocoded.csv")
 
+#Build up data frames for uni and bi-grams
 charfreq <- data.frame(NULL)
 charfreq[1,1] <- NA
 charfreq[1,2] <- NA
@@ -22,9 +24,9 @@ connections[1,2] <- NA
 connections[1,3] <- NA
 
 conndf <- data.frame(NULL)
-
 conndf[1:100,1] <- NA
 
+#Grab most common words
 url <- "http://www.rupert.id.au/resources/4000-most-common-english-words-xlsx.xlsx"
 
 GET(url,write_disk(common<-tempfile(fileext=".xlsx")))
@@ -32,6 +34,7 @@ common <- read_excel(path=common,sheet=1)
 colnames(common) <- c("most")
 common$most <- toupper(common$most)
 
+#Send it through this massive for loop which cleans mispellings, dumbs down words to their roots, and calculate overall uni and bi grams
 for (i in 1:nrow(dat)){
   temp <- strsplit(toupper(as.character(dat[i,1]))," ")
   if (length(temp[[1]])>0){
@@ -122,6 +125,7 @@ colnames(connections) <- c("First Word","Second Word","Frequency")
 
 We first take a look at the 20 most common words:
 ```{r, echo=FALSE}
+#Show top 20 unigrams
 top <- data.frame(head(charfreq[order(charfreq$Frequency,decreasing=T),],20))
 rownames(top) <- c(1:20)
 top
@@ -129,6 +133,7 @@ top
   
 For a faster glance at the data, we check the following word cloud:
 ```{r, message=FALSE, warning=FALSE}
+#Plot wordcloud
 library(wordcloud)
 cloud <- filter(charfreq,Frequency > 780)
 wordcloud(cloud$Word,cloud$Frequency,color="brown")
@@ -144,6 +149,7 @@ From just the top 20 words, and the word-cloud we can start to make some general
 
 Similarly, we check the most common bi-grams:
 ```{r, echo=FALSE}
+#Show top 20 bigrams
 top <- data.frame(head(connections[order(connections$Frequency,decreasing=T),],20))
 rownames(top) <- c(1:20)
 top
@@ -157,6 +163,7 @@ Again, we notice interesting things right away:
   
 We can also create a network diagram from these bi-grams:
 ```{r, message=FALSE, warning=FALSE}
+#Build out a network plot from bigrams
 library(networkD3)
 connections <- filter(connections,Frequency > 3)
 simpleNetwork(connections,zoom = T)

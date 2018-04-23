@@ -11,9 +11,11 @@ library(EMCluster)
 ```
 
 ```{r, echo=FALSE, warning=FALSE}
-dat <- read.csv("C:/Users/ATrac/OneDrive/Documents/Web/atraczyk.github.io/bfro_reports_geocoded.csv")
+#Read data
+dat <- read.csv("bfro_reports_geocoded.csv")
 dat <- dat[!is.na(dat$latitude)&!is.na(dat$longitude),]
 
+#Return predicted classes
 set.seed(0)
 test <- simple.init(dat[,c("latitude","longitude")],nclass=7)
 test <- shortemcluster(dat[,c("latitude","longitude")],test)
@@ -44,15 +46,17 @@ for (i in 1:nrow(dat)){
     dat[i,29] <- "Grandis Alekus"
   }
 }
+
+#Substring Year and Month from data for later
 dat$date <- as.character(dat$date)
 dat[,"Year"] <- as.numeric(substr(dat$date,1,4))
 dat[,"Month"] <- as.numeric(substr(dat$date,6,7))
 
+#Set up time series element
 bigts <- as.data.frame(NULL)
 bigts[1:679,1] <- NA
 bigts[,1:3] <- NA
 species <- c("Mogollon","Grassman","Momo","Wendigo","Skunk Ape","Sasquatch","Grandis Alekus")
-
 for (k in 1:7){
   temp <- filter(dat,dat$Species == as.character(species[k]))
   for (i in 1:97){
@@ -68,13 +72,12 @@ temp <- dat[,c("Year","Species")]
 temp <- filter(temp,temp$Year != 2017)
 bigts <- temp %>% group_by(Species,Year)
 bigts <- bigts %>% count(Year)
-
-write.csv(bigts,"bigts.csv",row.names = F)
 ```
 
 In addition to the other research, we also need to look at the frequency of Bigfoot sightings in the hope to predict future frequency. We begin by looking at sightings by species:
 
 ```{r, message=FALSE, warning=FALSE}
+#Plot sighting frequency by species
 library(ggplot2)
 bigts2 <- bigts[bigts$Year >= 1940,]
 
@@ -97,6 +100,7 @@ Though no humans have seen these events themselves, the likely sports were hair 
 We press on and try to use auto-regressive modelling to predict future sightings frequency. We first turn to hierarchical time series methods to model total sightings, by instead modelling each sub species. This allows the model to pick up smaller changes in sub species sightings, which might be thrown out of the total model as random error.
 
 ```{r, message=FALSE, warning=FALSE}
+#Set up time series
 library(hts)
 bigts3 <- data.frame(seq(1940,2016))
 colnames(bigts3) <- c("Year")
@@ -107,10 +111,12 @@ for (i in 1:length(unique(bigts2$Species))){
 }
 colnames(bigts3) <- c("Year",unique(bigts2$Species))
 
+#Calculate heirarchical time series
 sightings <- ts(bigts3[,2:8],start=1940,frequency=1)
 sightings <- hts(sightings)
 names(sightings$labels) <- c(paste("Bigfoot Sightings Forecast by Year","Total",sep="\n\n"), "Sub-Species")
 
+#Plot results
 fork <- forecast(sightings,h=10)
 plot(fork)
 ```
@@ -118,16 +124,19 @@ plot(fork)
 For our first try, we notice that there's still too much variability in our sub species sightings, and the prediction essentially mimics an exponential smoothing state space model. Instead, we choose to artificially smooth the data using smoothing splines, to allow the model to better pick up the trend. 
 
 ```{r}
+#Use smoohting splines on data
 smooth <- bigts3
 smooth[is.na(smooth)] <- 0
 for (i in 2:8){
   smooth[,i] <- smooth.spline(smooth[,1],smooth[,i])$y
 }
 
+#Calculate heirarchical time series on smoothed data
 spline <- ts(smooth[,2:8],start=1940,frequency=1)
 spline <- hts(spline)
 names(spline$labels) <- c(paste("Bigfoot Smoothed Sightings Forecast by Year","Total",sep="\n\n"), "Sub-Species")
 
+#Plot results
 fork <- forecast(spline,h=10)
 fork$bts[fork$bts < 0 ] <- 0
 plot(fork)
@@ -135,6 +144,7 @@ plot(fork)
 
 In our smoothing spline model, we see a shocking trend. It seems that many of our Bigfoot sub species are dying out. We see these predictions in the following table:
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
+#Show predicted values
 fork$bts
 ```
 
@@ -149,14 +159,19 @@ library(maps)
 library(leaflet)
 library(geojsonio)
 
+#Create random data frame for map
 schools <- data.frame(c("Stanford","University of Chicago","Yale","Duke","Harvard","UVA","UPenn","Cornell","Northwestern","Columbia","Vanderbilt","UC Berkley","Michigan", "Texas","NYU","Boston College","Washington University","Georgetown","Georgia","Notre Dame"),c(38.4275,41.7896,41.3164,36.001,43.3774,38.0337,39.952,42.453,42.056,40.807,36.145,37.872,42.278,30.284,40.729580,42.335,38.649,38.909,33.9477,41.705),c(-122.1702,-87.599,-72.9225,-78.9385,-71.116,-78.5076,-75.1939,-76.474,-87.675,-73.96,-86.802,-122.259,-83.737,-97.734,-73.996,-71.168,-90.311,-77.074,-83.377,-86.235))
 colnames(schools) <- c("School","Lat","Long")
+
+#Load geojson data for chloropath graph
 states <- geojsonio::geojson_read("us-states.geojson", what = "sp")
 
+#Get US cities data, filter to 'larger' cities
 cities <- us.cities
 cities <- cities[cities$pop >= 100000,]
 cities <- filter(cities, !is.na(lat)& !is.na(long))
 
+#Create Pallete for chloropath map
 bins <- c(0, 50, 100, 150, 200, 250, 300, 500, Inf)
 pal <- colorBin("YlOrRd", domain = states$Sightings, bins = bins)
 labels <- sprintf(
@@ -164,6 +179,7 @@ labels <- sprintf(
   states$name, states$Sightings
 ) %>% lapply(htmltools::HTML)
 
+#Render Map
 m <- leaflet(states) %>%
   setView(-96, 37.8, 4) %>%
   addProviderTiles("MapBox", options = providerTileOptions(
@@ -206,11 +222,13 @@ In the map above, we look at a chloroplast map of each state, with some of the c
 We now look at the possible encroachment of humans on Bigfoot habitat. To do so, we measure the Mahalanobis distance of each sighting to the closest major city. We choose Mahalanobis distance ($(x-y)^T \Sigma^{-1}(x-y)$) over Euclidean distance ($||(x-y)||_2^2$) as it corrects for differences in variance between latitude and longitude
 
 ```{r, eval=FALSE, include=TRUE}
+#Take relevant data
 popdist <- dat[,c(6,7,29)]
 popdist[,"City"] <- 100
 colnames(cities)[4] <- "latitude"
 colnames(cities)[5] <- "longitude"
 
+#Calculate smallest Mahalanobis distance
 popdist2 <- data.frame(NULL)
 for (i in 1:length(unique(popdist$Species))){
   temp <- popdist[popdist$Species == unique(popdist$Species)[i],]
@@ -226,6 +244,7 @@ for (i in 1:length(unique(popdist$Species))){
   popdist2 <- rbind(popdist2,temp)
 }
 
+#Roughly convert Lat/Long distance to miles
 popdist2$City <- popdist2$City * 69
 ```
 
@@ -237,6 +256,7 @@ library(reticulate)
 knitr::knit_engines$set(python = reticulate::eng_python)
 ```
 ```{python,eval=FALSE,include=TRUE}
+#Load python packages
 from bokeh.plotting import figure
 from bokeh.models import ColumnDataSource, HoverTool
 from bokeh.resources import CDN
@@ -245,9 +265,11 @@ import pandas as pd
 import numpy as np
 from bokeh.embed import file_html
 #
-data = pd.read_csv("C:/Users/ATrac/OneDrive/Documents/Web/Portfolio/popdist2.csv")
+#Read data again
+data = pd.read_csv("popdist2.csv")
 data_small = data.loc[data['City'] <= 50]
 #
+#Build out this way too overly pedantic Bokeh plot
 def data_trans(species, range_start = 0, range_end = 50, bin_width = 1):
     by_species = pd.DataFrame(columns = ['proportion','left','right',                                         'f_proportion','f_interval','species','color'])
     range_extent = range_end - range_start
